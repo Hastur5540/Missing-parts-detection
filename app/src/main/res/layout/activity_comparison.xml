@@ -13,8 +13,7 @@
             android:id="@+id/backButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="返回"
-            android:layout_margin="16dp" />
+            android:text="返回" />
 
         <EditText
             android:id="@+id/toolsInput"
@@ -23,16 +22,20 @@
             android:hint="输入ID" />
 
         <ImageView
-            android:id="@+id/workerImageView_IN"
+            android:id="@+id/deviceImageView_IN"
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            android:clickable="true"
+            android:focusable="true"/>
 
         <ImageView
-            android:id="@+id/workerImageView_OUT"
+            android:id="@+id/deviceImageView_OUT"
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            android:clickable="true"
+            android:focusable="true"/>
 
         <!-- 填充剩余空间的 View -->
         <View

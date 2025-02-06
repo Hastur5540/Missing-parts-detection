@@ -13,16 +13,10 @@
         android:layout_gravity="start" />
 
     <EditText
-        android:id="@+id/nameInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="输入工人姓名" />
-
-    <EditText
         android:id="@+id/idInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="输入工人工号" />
+        android:hint="输入设备号" />
 
     <Button
         android:id="@+id/buttonCamera"
@@ -35,7 +29,9 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:scaleType="centerCrop"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"/>
 
     <View
         android:layout_weight="1"

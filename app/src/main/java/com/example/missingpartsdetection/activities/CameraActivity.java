@@ -46,7 +46,7 @@ public class CameraActivity extends AppCompatActivity {
     private ImageView imageView;
 
     private String photoPath;
-    private String w_id = null;
+    private String d_id = null;
 
     private ImageCapture capturedImg;
     private View captureFrame;
@@ -76,9 +76,9 @@ public class CameraActivity extends AppCompatActivity {
         // 得当当前activity的h 和 w
         getScreenHW(this);
 
-        String workerId = getIntent().getStringExtra("workerId");
-        if (workerId != null) {
-            w_id = workerId;
+        String deviceId = getIntent().getStringExtra("DeviceId");
+        if (deviceId != null) {
+            d_id = deviceId;
         }
 
 
@@ -95,9 +95,6 @@ public class CameraActivity extends AppCompatActivity {
         captureButton.setOnClickListener(v -> capturePhoto());
         backButton.setOnClickListener(v -> finish());
     }
-
-
-
 
 
 
@@ -281,7 +278,20 @@ public class CameraActivity extends AppCompatActivity {
             Intent resultIntent = new Intent();
             resultIntent.putExtra("photoPath", photoPath);
             setResult(RESULT_OK, resultIntent);
-            finish();
+            setContentView(R.layout.activity_camera);
+
+            // 重新获取视图对象
+            cameraPreview = findViewById(R.id.cameraPreview);
+            captureFrame = findViewById(R.id.captureFrame);
+            captureButton = findViewById(R.id.captureButton_1);
+            backButton = findViewById(R.id.backButton);
+
+            // 重新启动相机
+            startCamera();
+
+            // 设置按钮点击事件
+            captureButton.setOnClickListener(v1 -> capturePhoto());
+            backButton.setOnClickListener(v2 -> finish());
         });
 
 
@@ -306,21 +316,27 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void saveImage(byte[] data) {
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        // 获取设备ID
+        String deviceFolderName = "Device_" + d_id; // 使用设备ID命名文件夹
+        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
+
+        // 创建文件夹，如果不存在则创建
         if (!storageDir.exists() && !storageDir.mkdirs()) {
             return;
         }
+
+        // 创建图片文件名
         String inOutFlag = getIntent().getStringExtra("inOutFlag") + "_";
-        String fileName = inOutFlag + w_id + ".jpg";
+        String fileName = inOutFlag + d_id + "_" + System.currentTimeMillis() + ".jpg"; // 以时间戳确保文件名唯一
         File imageFile = new File(storageDir, fileName);
         photoPath = imageFile.getAbsolutePath();
 
+        // 写入图片文件
         try (FileOutputStream fos = new FileOutputStream(imageFile)) {
             fos.write(data);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
 

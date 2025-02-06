@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.missingpartsdetection.R;
 import com.example.missingpartsdetection.database.DatabaseHelper;
-import com.example.missingpartsdetection.entity.Worker;
+import com.example.missingpartsdetection.entity.Device;
 import com.example.missingpartsdetection.httpConnetection.HttpRequest;
 import com.example.missingpartsdetection.utils.ImageProcess;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -32,10 +32,10 @@ import java.util.Objects;
 public class ComparisonActivity extends AppCompatActivity {
     private EditText toolsInput;
     private Button compareButton, captureButton,backButton;
-    private ImageView workerImageView_IN;
-    private ImageView workerImageView_OUT;
-    private Worker worker;
-    private static List<Worker> workerList = new ArrayList<>();
+    private ImageView deviceImageView_IN;
+    private ImageView deviceImageView_OUT;
+    private Device device;
+    private static List<Device> deviceList = new ArrayList<>();
     String photoPath_OUT = "";
     Boolean Consistent_flags;
     private RelativeLayout loadingView; // 加载动画视图
@@ -58,10 +58,10 @@ public class ComparisonActivity extends AppCompatActivity {
         toolsInput = findViewById(R.id.toolsInput);
         compareButton = findViewById(R.id.compareButton);
         captureButton = findViewById(R.id.captureButton);
-        workerImageView_IN = findViewById(R.id.workerImageView_IN);
-        workerImageView_OUT = findViewById(R.id.workerImageView_OUT);
-        worker = (Worker) getIntent().getSerializableExtra("worker"); // Keep using Serializable
-        workerList = (List<Worker>) getIntent().getSerializableExtra("workerList");
+        deviceImageView_IN = findViewById(R.id.deviceImageView_IN);
+        deviceImageView_OUT = findViewById(R.id.deviceImageView_OUT);
+        device = (Device) getIntent().getSerializableExtra("device"); // Keep using Serializable
+        deviceList = (List<Device>) getIntent().getSerializableExtra("deviceList");
         backButton = findViewById(R.id.backButton);
         databaseHelper = new DatabaseHelper(this);
 
@@ -71,15 +71,32 @@ public class ComparisonActivity extends AppCompatActivity {
         });
         // 获取加载视图
         loadingView = findViewById(R.id.loadingView);
-        toolsInput.setText(worker.getId());
-        String photoPath_IN = worker.getPhotoPath_IN();
+        toolsInput.setText(device.getId());
+        String photoPath_IN = loadFirstImagesFromDevice("in");
         Bitmap bitmap = BitmapFactory.decodeFile(photoPath_IN);
-        workerImageView_IN.setImageBitmap(bitmap);
+        deviceImageView_IN.setImageBitmap(bitmap);
+        photoPath_OUT = loadFirstImagesFromDevice("out");
+        Bitmap bitmap_1= BitmapFactory.decodeFile(photoPath_OUT);
+        deviceImageView_OUT.setImageBitmap(bitmap_1);
+
+        deviceImageView_IN.setOnClickListener(v -> {
+            Intent intent = new Intent(ComparisonActivity.this, AlbumActivity.class);
+            intent.putExtra("DeviceId", device.getId());
+            intent.putExtra("inOutFlag", "in");
+            startActivity(intent);
+        });
+
+        deviceImageView_OUT.setOnClickListener(v -> {
+            Intent intent = new Intent(ComparisonActivity.this, AlbumActivity.class);
+            intent.putExtra("DeviceId", device.getId());
+            intent.putExtra("inOutFlag", "out");
+            startActivity(intent);
+        });
 
         // Capture button functionality
         captureButton.setOnClickListener(v -> {
             Intent intent = new Intent(ComparisonActivity.this, CameraActivity.class);
-            intent.putExtra("workerId", worker.getId());
+            intent.putExtra("DeviceId", device.getId());
             intent.putExtra("inOutFlag", "out");
             startActivityForResult(intent, 1);
         });
@@ -96,67 +113,63 @@ public class ComparisonActivity extends AppCompatActivity {
                     try {
                         Thread.sleep(2000);// 实际比较逻辑将放置在这里
 
-
-
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
 
-                    HttpRequest httpRequest = new HttpRequest("/process_image");
-                    String photoPathIn = worker.getPhotoPath_IN();
-                    String photoPathOut = worker.getPhotoPath_OUT();
-
-                    ArrayList<Map<String, Object>> result1 = null;
-                    ArrayList<Map<String, Object>> result2 = null;
-
-                    try {
-                        String response = httpRequest.getCompareResult(photoPathIn, photoPathOut);
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        Map<String, Object> responseJson = objectMapper.readValue(response, new TypeReference<Map<String, Object>>(){});
-
-                        image1Base64 = Objects.requireNonNull(responseJson.get("image_base64_1")).toString();
-                        image2Base64 = Objects.requireNonNull(responseJson.get("image_base64_2")).toString();
-                        String image1CheckedPath = worker.getId() + "_IN_Checked.jpg";
-                        String image2CheckedPath = worker.getId() + "_OUT_Checked.jpg";
-                        ImageProcess imageProcess = new ImageProcess();
-                        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-                        imageInCheckedPath = new File(storageDir, image1CheckedPath).getAbsolutePath();
-                        imageOutCheckedPath = new File(storageDir, image2CheckedPath).getAbsolutePath();
-                        imageProcess.saveBase64ToFile(image1Base64, imageInCheckedPath);
-                        imageProcess.saveBase64ToFile(image2Base64, imageOutCheckedPath);
-
-                        result1 = (ArrayList<Map<String, Object>>) responseJson.get("result1");
-                        result2 = (ArrayList<Map<String, Object>>) responseJson.get("result2");
-
-                        if (result1 != null){
-                            for (Map<String, Object> result: result1) {
-                                String className = result.get("class_name").toString();
-                                int num = Integer.parseInt(result.get("count").toString());
-                                bundle_In.putInt(className, num);
-                            }
-                        }
-                        if (result2!=null){
-                            for (Map<String, Object> result:
-                                    result2) {
-                                String className = result.get("class_name").toString();
-                                int num = Integer.parseInt(result.get("count").toString());
-                                bundle_Out.putInt(className, num);
-                            }
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+//                    HttpRequest httpRequest = new HttpRequest("/process_image");
+//                    String photoPath = device.getPhotoPath();
+//
+//                    ArrayList<Map<String, Object>> result1 = null;
+//                    ArrayList<Map<String, Object>> result2 = null;
+//
+//                    try {
+//                        String response = httpRequest.getCompareResult(photoPathIn, photoPathOut);
+//                        ObjectMapper objectMapper = new ObjectMapper();
+//                        Map<String, Object> responseJson = objectMapper.readValue(response, new TypeReference<Map<String, Object>>(){});
+//
+//                        image1Base64 = Objects.requireNonNull(responseJson.get("image_base64_1")).toString();
+//                        image2Base64 = Objects.requireNonNull(responseJson.get("image_base64_2")).toString();
+//                        String image1CheckedPath = device.getId() + "_IN_Checked.jpg";
+//                        String image2CheckedPath = device.getId() + "_OUT_Checked.jpg";
+//                        ImageProcess imageProcess = new ImageProcess();
+//                        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+//                        imageInCheckedPath = new File(storageDir, image1CheckedPath).getAbsolutePath();
+//                        imageOutCheckedPath = new File(storageDir, image2CheckedPath).getAbsolutePath();
+//                        imageProcess.saveBase64ToFile(image1Base64, imageInCheckedPath);
+//                        imageProcess.saveBase64ToFile(image2Base64, imageOutCheckedPath);
+//
+//                        result1 = (ArrayList<Map<String, Object>>) responseJson.get("result1");
+//                        result2 = (ArrayList<Map<String, Object>>) responseJson.get("result2");
+//
+//                        if (result1 != null){
+//                            for (Map<String, Object> result: result1) {
+//                                String className = result.get("class_name").toString();
+//                                int num = Integer.parseInt(result.get("count").toString());
+//                                bundle_In.putInt(className, num);
+//                            }
+//                        }
+//                        if (result2!=null){
+//                            for (Map<String, Object> result:
+//                                    result2) {
+//                                String className = result.get("class_name").toString();
+//                                int num = Integer.parseInt(result.get("count").toString());
+//                                bundle_Out.putInt(className, num);
+//                            }
+//                        }
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
 
                     // 处理结束后，更新UI
                     runOnUiThread(() -> {
                         hideLoading();
                         // 准备跳转到新页面
-                        Intent intent = new Intent(ComparisonActivity.this, ToolCheckActivity.class);
-                        if(worker.getId().equals("000")){
-                            intent.putExtra("tools_IN", bundle_In);
-                            intent.putExtra("tools_OUT", bundle_Out);
+                        Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
+                        if(device.getId().equals("000")){
+                            intent.putExtra("tools_IN", device.getPhotoPath());
                         }else{
                             intent.putExtra("tools_IN", bundle_In);
                             intent.putExtra("tools_OUT", bundle_Out);
@@ -164,21 +177,28 @@ public class ComparisonActivity extends AppCompatActivity {
                             intent.putExtra("out_checked_path", imageOutCheckedPath);
                         }
                         startActivityForResult(intent, 2);
-                        // 这里处理工具比较的逻辑
-//                        boolean toolsMatch = true; // 这应为您的实际比较结果
-//                        if (toolsMatch) {
-//                            Toast.makeText(this, "工具一致", Toast.LENGTH_SHORT).show();
-//                            Intent resultIntent = new Intent();
-//                            resultIntent.putExtra("worker", worker);
-//                            setResult(RESULT_OK, resultIntent);
-//                        } else {
-//                            Toast.makeText(this, "工具不一致", Toast.LENGTH_SHORT).show();
-//                        }
-//                        finish(); // 结束当前活动
                     });
                 }).start();
             }
         });
+    }
+
+    private String loadFirstImagesFromDevice(String inOutFlag) {
+
+        String deviceFolderName = "Device_" + device.getId(); // 使用设备ID命名文件夹
+        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
+        String fileName = inOutFlag+'_'+ device.getId();
+        if (storageDir.exists()) {
+            File[] files = storageDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().startsWith(fileName)) {
+                        return file.getAbsolutePath();
+                    }
+                }
+            }
+        }
+        return deviceFolderName;
     }
 
     private void showLoading() {
@@ -195,9 +215,7 @@ public class ComparisonActivity extends AppCompatActivity {
         if (requestCode == 1 && resultCode == RESULT_OK) {
             photoPath_OUT = data.getStringExtra("photoPath");
             Bitmap bitmap = BitmapFactory.decodeFile(photoPath_OUT);
-            workerImageView_OUT.setImageBitmap(bitmap);
-            worker.setPhotoPath_OUT(photoPath_OUT);
-            databaseHelper.updateWorker(worker.getId(), worker.getName(), worker.getPhotoPath_IN(), worker.getPhotoPath_OUT());
+            deviceImageView_OUT.setImageBitmap(bitmap);
         }
         if (requestCode == 2 && resultCode == RESULT_OK) {
             Consistent_flags = data.getBooleanExtra("Consistent_flags", false);
@@ -205,7 +223,7 @@ public class ComparisonActivity extends AppCompatActivity {
             bundle_Out.clear();
             if(Consistent_flags){
                 Intent resultIntent = new Intent();
-                resultIntent.putExtra("worker", worker);
+                resultIntent.putExtra("worker", device);
                 setResult(RESULT_OK, resultIntent);
                 finish();
             }

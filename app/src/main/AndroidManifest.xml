@@ -33,10 +33,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".activities.CameraActivity" />
-        <!--activity android:name=".CameraActivity_OUT" /-->
-        <activity android:name=".activities.ToolCheckActivity"/>
+        <activity android:name=".activities.DeviceCheckActivity"/>
         <activity android:name=".activities.ComparisonActivity" />
-        <activity android:name=".activities.WorkerListActivity" />
+        <activity android:name=".activities.DeviceListActivity" />
+        <activity android:name=".activities.AlbumActivity" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.missingpartsdetection.fileprovider"

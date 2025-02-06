@@ -7,14 +7,14 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-import com.example.missingpartsdetection.entity.Worker;
+import com.example.missingpartsdetection.entity.Device;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "worker_database.db";
+    private static final String DATABASE_NAME = "device_database.db";
     private static final int DATABASE_VERSION = 1;
 
     public DatabaseHelper(Context context) {
@@ -23,54 +23,47 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE workers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, workerId TEXT, photoPath_IN TEXT, photoPath_OUT TEXT, photoPath_IN_Checked TEXT, photoPath_OUT_Checked TEXT)");
+        db.execSQL("CREATE TABLE devices (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId TEXT, photoPath TEXT, photoPath_Checked TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS workers");
+        db.execSQL("DROP TABLE IF EXISTS devices");
         onCreate(db);
     }
 
-    public List<Worker> getAllWorkers() {
-        List<Worker> workers = new ArrayList<>();
+    public List<Device> getAlldevices() {
+        List<Device> devices = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM workers", null);
+        Cursor cursor = db.rawQuery("SELECT * FROM devices", null);
 
         if (cursor.moveToFirst()) {
             do {
-                int nameIndex = cursor.getColumnIndex("name");
-                int workerIdIndex = cursor.getColumnIndex("workerId");
-                int photoPathInIndex = cursor.getColumnIndex("photoPath_IN");
-                int photoPathOutIndex = cursor.getColumnIndex("photoPath_OUT");
-
-                if (nameIndex != -1 && workerIdIndex != -1 && photoPathInIndex != -1 && photoPathOutIndex != -1) {
-                    String name = cursor.getString(nameIndex);
-                    String workerId = cursor.getString(workerIdIndex);
-                    String photoPath_IN = cursor.getString(photoPathInIndex);
-                    String photoPath_OUT = cursor.getString(photoPathOutIndex);
-                    workers.add(new Worker(name, workerId, photoPath_IN, photoPath_OUT));
+                int IdIndex = cursor.getColumnIndex("deviceId");
+                int photoPathIndex = cursor.getColumnIndex("photoPath");
+                if (IdIndex != -1 && photoPathIndex != -1) {
+                    String Id = cursor.getString(IdIndex);
+                    String photoPath = cursor.getString(photoPathIndex);
+                    devices.add(new Device(Id, photoPath));
                 } else {
-                    Log.e("DatabaseError", "Column not found in workers table");
+                    Log.e("DatabaseError", "Column not found in devices table");
                 }
             } while (cursor.moveToNext());
         }
 
         cursor.close();
         db.close();
-        return workers;
+        return devices;
     }
 
-    public void addWorker(String name, String workerId, String photoPath_IN, String photoPath_OUT) {
+    public void addDevice(String Id, String photoPath) {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             ContentValues values = new ContentValues();
-            values.put("name", name);
-            values.put("workerId", workerId);
-            values.put("photoPath_IN", photoPath_IN);
-            values.put("photoPath_OUT", photoPath_OUT);
+            values.put("deviceId", Id);
+            values.put("photoPath", photoPath);
 
-            long newRowId = db.insert("workers", null, values);
+            long newRowId = db.insert("devices", null, values);
             if (newRowId != -1) {
                 Log.d("DatabaseHelper", "Added worker with ID: " + newRowId);
             } else {
@@ -83,11 +76,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void deleteWorker(String workerId) {
+    public void deleteDevice(String deviceId) {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
-            db.delete("workers", "workerId = ?", new String[]{workerId});
-            Log.d("DatabaseHelper", "Deleted worker with ID: " + workerId);
+            db.delete("devices", "deviceId = ?", new String[]{deviceId});
+            Log.d("DatabaseHelper", "Deleted worker with ID: " + deviceId);
         } catch (Exception e) {
             Log.e("DatabaseError", "Error deleting worker: " + e.getMessage());
         } finally {
@@ -95,25 +88,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public Worker getWorkerById(String workerId) {
+    public Device getDeviceById(String Id) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Worker worker = null;
+        Device device = null;
         Cursor cursor = null;
-
+        Log.d("DatabaseQuery", "Querying for Id: " + Id);
         try {
-            cursor = db.query("workers", null, "workerId = ?", new String[]{String.valueOf(workerId)}, null, null, null);
+            cursor = db.query("devices", null, "deviceId = ?", new String[]{String.valueOf(Id)}, null, null, null);
+            Log.d("DatabaseQuery", "Number of rows returned: " + (cursor != null ? cursor.getCount() : 0));
             if (cursor != null && cursor.moveToFirst()) {
-                int nameIndex = cursor.getColumnIndex("name");
-                int photoPathInIndex = cursor.getColumnIndex("photoPath_IN");
-                int photoPathOutIndex = cursor.getColumnIndex("photoPath_OUT");
+                int IdIndex = cursor.getColumnIndex("deviceId");
+                int photoPathIndex = cursor.getColumnIndex("photoPath");
 
-                if (nameIndex != -1 && photoPathInIndex != -1 && photoPathOutIndex != -1) {
-                    String name = cursor.getString(nameIndex);
-                    String photoPath_IN = cursor.getString(photoPathInIndex);
-                    String photoPath_OUT = cursor.getString(photoPathOutIndex);
-                    worker = new Worker(name, workerId, photoPath_IN, photoPath_OUT);
+                if (IdIndex != -1 && photoPathIndex != -1) {
+                    String photoPath = cursor.getString(photoPathIndex);
+                    device = new Device(Id, photoPath);
                 } else {
-                    Log.e("DatabaseError", "Column not found in workers table");
+                    Log.e("DatabaseError", "Column not found in devices table");
                 }
             }
         } catch (Exception e) {
@@ -124,23 +115,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
             db.close();
         }
-
-        return worker;
+        return device;
     }
 
-    public void updateWorker(String workerId, String name, String photoPath_IN, String photoPath_OUT) {
+    public void updateDevice(String Id, String photoPath) {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             ContentValues values = new ContentValues();
-            values.put("name", name);
-            values.put("photoPath_IN", photoPath_IN);
-            values.put("photoPath_OUT", photoPath_OUT);
+            values.put("photoPath", photoPath);
 
-            int updatedRows = db.update("workers", values, "workerId = ?", new String[]{workerId});
+            int updatedRows = db.update("devices", values, "Id = ?", new String[]{Id});
             if (updatedRows > 0) {
-                Log.d("DatabaseHelper", "Updated worker with ID: " + workerId);
+                Log.d("DatabaseHelper", "Updated worker with ID: " + Id);
             } else {
-                Log.e("DatabaseError", "No worker found with ID: " + workerId);
+                Log.e("DatabaseError", "No worker found with ID: " + Id);
             }
         } catch (Exception e) {
             Log.e("DatabaseError", "Error updating worker: " + e.getMessage());
@@ -150,19 +138,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 
-    public void updateCheckedImagePath(String workerId, String checkedImage1Path, String checkedImage2Path) {
+    public void updateCheckedImagePath(String deviceId, String checkedImage1Path) {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             ContentValues values = new ContentValues();
-            values.put("photoPath_IN_Checked", checkedImage1Path);
-            values.put("photoPath_OUT_Checked", checkedImage2Path);
+            values.put("photoPath_Checked", checkedImage1Path);
 
-            // 更新指定 workerId 的记录
-            int updatedRows = db.update("workers", values, "workerId = ?", new String[]{workerId});
+            // 更新指定 deviceId 的记录
+            int updatedRows = db.update("devices", values, "deviceId = ?", new String[]{deviceId});
             if (updatedRows > 0) {
-                Log.d("DatabaseHelper", "Updated checked image paths for worker with ID: " + workerId);
+                Log.d("DatabaseHelper", "Updated checked image paths for worker with ID: " + deviceId);
             } else {
-                Log.e("DatabaseError", "No worker found with ID: " + workerId);
+                Log.e("DatabaseError", "No worker found with ID: " + deviceId);
             }
         } catch (Exception e) {
             Log.e("DatabaseError", "Error updating checked image paths: " + e.getMessage());

@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
 
-import com.example.missingpartsdetection.entity.Worker;
+import com.example.missingpartsdetection.entity.Device;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +16,7 @@ import java.util.List;
 
 public class MyApp extends Application implements Application.ActivityLifecycleCallbacks {
     private int activityReferences = 0;
-    private List<Worker> workerList;
+    private List<Device> deviceList;
     private static final String FILE_NAME = "workers.dat";
     @Override
     public void onCreate() {
@@ -45,16 +45,16 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
 
     private void loadWorkers() {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilesDir() + "/" + FILE_NAME))) {
-            workerList = (List<Worker>) ois.readObject();
+            deviceList = (List<Device>) ois.readObject();
         } catch (Exception e) {
             e.printStackTrace();
-            workerList = new ArrayList<>(); // 初始化为空列表
+            deviceList = new ArrayList<>(); // 初始化为空列表
         }
     }
 
     private void saveWorkers() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(getFilesDir() + "/" + FILE_NAME))) {
-            oos.writeObject(workerList);
+            oos.writeObject(deviceList);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -91,7 +91,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     @Override
     public void onActivityDestroyed(Activity activity) {}
 
-    public List<Worker> getWorkerList() {
-        return workerList;
+    public List<Device> getWorkerList() {
+        return deviceList;
     }
 }

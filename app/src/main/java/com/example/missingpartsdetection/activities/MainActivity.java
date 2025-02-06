@@ -13,10 +13,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.missingpartsdetection.R;
 import com.example.missingpartsdetection.database.DatabaseHelper;
-import com.example.missingpartsdetection.entity.Worker;
+import com.example.missingpartsdetection.entity.Device;
 
 public class MainActivity extends AppCompatActivity {
-    private EditText nameInput, idInput;
+    private EditText idInput;
     private Button listButton, captureButton, submitButton;
     private String photoPath = "";
     private ImageView imageView;
@@ -27,7 +27,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         listButton = findViewById(R.id.listButton);
-        nameInput = findViewById(R.id.nameInput);
         idInput = findViewById(R.id.idInput);
         captureButton = findViewById(R.id.buttonCamera);
         submitButton = findViewById(R.id.submitButton);
@@ -35,14 +34,14 @@ public class MainActivity extends AppCompatActivity {
         databaseHelper = new DatabaseHelper(this);
 
         listButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, WorkerListActivity.class);
+            Intent intent = new Intent(MainActivity.this, DeviceListActivity.class);
             startActivity(intent);
         });
 
         captureButton.setOnClickListener(v -> {
             if (validateInputs()) {
                 Intent intent = new Intent(MainActivity.this, CameraActivity.class);
-                intent.putExtra("workerId", idInput.getText().toString());
+                intent.putExtra("DeviceId", idInput.getText().toString());
                 intent.putExtra("inOutFlag", "in");
                 startActivityForResult(intent, 1);
             }
@@ -53,50 +52,53 @@ public class MainActivity extends AppCompatActivity {
                 if (photoPath.isEmpty()) {
                     Toast.makeText(this, "请先拍摄照片", Toast.LENGTH_SHORT).show();
                 } else {
-                    String name = nameInput.getText().toString();
                     String id = idInput.getText().toString();
 
                     // 检查工号是否已存在
-                    if (isWorkerIdExists(id)) {
-                        Toast.makeText(this, "工号 " + id + " 已存在", Toast.LENGTH_SHORT).show();
+                    if (isDeviceIdExists(id)) {
+                        Toast.makeText(this, "设备号 " + id + " 已存在", Toast.LENGTH_SHORT).show();
                     } else {
-                        databaseHelper.addWorker(name, id, photoPath, null);
-                        Toast.makeText(this, "工人信息已保存！", Toast.LENGTH_SHORT).show();
+                        databaseHelper.addDevice(id, photoPath);
+                        Toast.makeText(this, "设备信息已保存！", Toast.LENGTH_SHORT).show();
                         clearInputs();
                     }
                 }
             }
         });
+
+
+        imageView.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AlbumActivity.class);
+            intent.putExtra("DeviceId", idInput.getText().toString());
+            intent.putExtra("inOutFlag", "in");
+            startActivity(intent);
+        });
+
     }
 
+    public boolean isDeviceIdExists(String deviceId) {
+        Device device = databaseHelper.getDeviceById(deviceId);
+        boolean exists = false;
+        if(device !=null){
+            exists=true;
+        }
+        return exists;
+    }
 
     private boolean validateInputs() {
-        if (nameInput.getText().toString().trim().isEmpty()) {
-            Toast.makeText(this, "请先输入姓名", Toast.LENGTH_SHORT).show();
-            return false;
-        }
         if (idInput.getText().toString().trim().isEmpty()) {
-            Toast.makeText(this, "请先输入工号", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "请先输入设备号", Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;
     }
 
     private void clearInputs() {
-        nameInput.setText("");
         idInput.setText("");
         imageView.setImageDrawable(null); // 清空图片显示
         photoPath = ""; // 清空照片路径
     }
 
-    public boolean isWorkerIdExists(String workerId) {
-        Worker worker = databaseHelper.getWorkerById(workerId);
-        boolean exists = false;
-        if(worker!=null){
-            exists=true;
-        }
-        return exists;
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
