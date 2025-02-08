@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:layout_height="200dp"
+    android:layout_margin="8dp"> <!-- 外边距 -->
 
+    <!-- 图片 -->
     <ImageView
         android:id="@+id/photoImageView"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true" />
 
+    <!-- 删除按钮,覆盖在右上角,初始隐藏 -->
     <Button
         android:id="@+id/deleteButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Delete"
-        android:layout_marginTop="8dp"
-        android:visibility="gone"/> <!-- Initially hidden -->
-</LinearLayout>
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="8dp"
+        android:background="@android:drawable/ic_delete"
+        android:visibility="gone" />
+
+</FrameLayout>

@@ -34,6 +34,7 @@
         </activity>
         <activity android:name=".activities.DeveloperPageActivity" />
         <activity android:name=".activities.CameraActivity" />
+        <activity android:name=".activities.Camera_AlbumActivity" />
         <activity android:name=".activities.DeviceCheckActivity"/>
         <activity android:name=".activities.ComparisonActivity" />
         <activity android:name=".activities.DeviceListActivity" />

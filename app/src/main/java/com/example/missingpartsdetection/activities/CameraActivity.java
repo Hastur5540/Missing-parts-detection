@@ -7,13 +7,16 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,6 +40,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class CameraActivity extends AppCompatActivity {
@@ -44,12 +49,17 @@ public class CameraActivity extends AppCompatActivity {
     private Button captureButton;
     private Button backButton;
     private ImageView imageView;
+    private ImageView overlayImageView;
+    private Button selectPhotoButton;
+    private SeekBar seekBar;
+    // Add these constants for request codes
+    private static final int PICK_IMAGE_REQUEST = 102;
 
     private String photoPath;
     private String d_id = null;
 
     private ImageCapture capturedImg;
-    private View captureFrame;
+//    private View captureFrame;
     private Bitmap croppedImg;
     private HashMap<String, Integer> screenHW = new HashMap<>();
 
@@ -61,6 +71,8 @@ public class CameraActivity extends AppCompatActivity {
 
     private ProcessCameraProvider processCameraProvider;
 
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,12 +80,14 @@ public class CameraActivity extends AppCompatActivity {
         setContentView(R.layout.activity_camera);
 
         cameraPreview = findViewById(R.id.cameraPreview);
-
-        captureFrame = findViewById(R.id.captureFrame);
+//        captureFrame = findViewById(R.id.captureFrame);
         captureButton = findViewById(R.id.captureButton_1);
         backButton = findViewById(R.id.backButton);
+        overlayImageView = findViewById(R.id.overlayImageView);
+        selectPhotoButton = findViewById(R.id.selectPhotoButton);
+        seekBar = findViewById(R.id.seekBar);
 
-        // 得当当前activity的h 和 w
+        // 得当前activity的h 和 w
         getScreenHW(this);
 
         String deviceId = getIntent().getStringExtra("DeviceId");
@@ -94,9 +108,58 @@ public class CameraActivity extends AppCompatActivity {
 
         captureButton.setOnClickListener(v -> capturePhoto());
         backButton.setOnClickListener(v -> finish());
+
+        // Check "inOutFlag" and show button/seekBar for "out"
+        String inOutFlag = getIntent().getStringExtra("inOutFlag");
+        if ("out".equals(inOutFlag)) {
+            selectPhotoButton.setVisibility(View.VISIBLE);
+            seekBar.setVisibility(View.VISIBLE);
+
+            // Select photo button click listener
+            selectPhotoButton.setOnClickListener(v -> choosePhoto());
+
+            // SeekBar listener to adjust transparency
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    float alpha = progress / 100f; // Convert to a fraction
+                    overlayImageView.setAlpha(alpha); // Set transparency
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
     }
 
+    private void choosePhoto() {
+        Intent intent = new Intent(this, Camera_AlbumActivity.class);
+        intent.putExtra("DeviceId", d_id); // 传递设备ID
+        intent.putExtra("inOutFlag", "in"); // 传入 in/out 标志
+        startActivityForResult(intent, 1); // 启动Camera_AlbumActivity并等待返回
+    }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // 判断从选择照片页面返回的结果
+        if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
+            // 获取照片的路径
+            String selectedImagePath = data.getStringExtra("SelectedImagePath");
+            if (selectedImagePath != null) {
+                // 根据路径读取图片并设置到 overlayImageView
+                Bitmap bitmap = BitmapFactory.decodeFile(selectedImagePath);
+                overlayImageView.setImageBitmap(bitmap);
+
+                // 确保 overlayImageView 显示
+                overlayImageView.setVisibility(View.VISIBLE);
+            }
+        }
+    }
 
     // 根据预定比例常量重塑View组件
     private void reshapeView(View view, int height_limit, int width, float hwRatio){
@@ -113,7 +176,7 @@ public class CameraActivity extends AppCompatActivity {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         if (CAMERA_PREVIEW_HW_RATIO != -1){
             reshapeView(cameraPreview, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO), screenHW.get("width"), CAMERA_PREVIEW_HW_RATIO);
-            reshapeView(captureFrame, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO * 0.8), (int) (screenHW.get("width") * FRAME_CAMERAPREVIEW_RATIO), CAPTURE_FRAME_HW_RATIO);
+//            reshapeView(captureFrame, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO * 0.8), (int) (screenHW.get("width") * FRAME_CAMERAPREVIEW_RATIO), CAPTURE_FRAME_HW_RATIO);
         }
 
 
@@ -145,7 +208,7 @@ public class CameraActivity extends AppCompatActivity {
                                 CAMERA_PREVIEW_HW_RATIO = (float) image.getWidth() / image.getHeight();
 
                             reshapeView(cameraPreview, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO), screenHW.get("width"), CAMERA_PREVIEW_HW_RATIO);
-                            reshapeView(captureFrame, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO * 0.8), (int) (screenHW.get("width") * FRAME_CAMERAPREVIEW_RATIO), CAPTURE_FRAME_HW_RATIO);
+//                            reshapeView(captureFrame, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO * 0.8), (int) (screenHW.get("width") * FRAME_CAMERAPREVIEW_RATIO), CAPTURE_FRAME_HW_RATIO);
 
                             image.close();
 
@@ -182,7 +245,8 @@ public class CameraActivity extends AppCompatActivity {
                 // 图片处理流程： 旋转，放缩，截取。
                 Bitmap bitmap = imageProxyToBitmap(image);
 
-                croppedImg = cropBitmapToFrame(bitmap, captureFrame);
+//                croppedImg = cropBitmapToFrame(bitmap, captureFrame);
+                croppedImg = bitmap;
 
                 runOnUiThread(() -> toCheckView(croppedImg));
 
@@ -225,32 +289,32 @@ public class CameraActivity extends AppCompatActivity {
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
-    private Bitmap cropBitmapToFrame(Bitmap original, View frame) {
-        int cameraPreviewHeight = cameraPreview.getHeight();
-        int cameraPreviewWidth = cameraPreview.getWidth();
-
-        // 需要先将图片缩放到CameraPreview上的大小
-        Bitmap scalaredImg = Bitmap.createScaledBitmap(original, cameraPreviewWidth, cameraPreviewHeight, true);
-
-        // Get frame position and size
-        int[] location = new int[2];
-        frame.getLocationOnScreen(location);
-        int frameX = location[0];
-        int frameY = location[1];
-        int frameWidth = frame.getWidth();
-        int frameHeight = frame.getHeight();
-
-
-        int[] previewLoc = new int[2];
-        cameraPreview.getLocationOnScreen(previewLoc);
-        int preFrameX = previewLoc[0];
-        int preFrameY = previewLoc[1];
-
-
-        // 返回截取结果
-//        return original;
-        return Bitmap.createBitmap(scalaredImg, frameX-preFrameX, frameY-preFrameY, frameWidth, frameHeight);
-    }
+//    private Bitmap cropBitmapToFrame(Bitmap original, View frame) {
+//        int cameraPreviewHeight = cameraPreview.getHeight();
+//        int cameraPreviewWidth = cameraPreview.getWidth();
+//
+//        // 需要先将图片缩放到CameraPreview上的大小
+//        Bitmap scalaredImg = Bitmap.createScaledBitmap(original, cameraPreviewWidth, cameraPreviewHeight, true);
+//
+//        // Get frame position and size
+//        int[] location = new int[2];
+//        frame.getLocationOnScreen(location);
+//        int frameX = location[0];
+//        int frameY = location[1];
+//        int frameWidth = frame.getWidth();
+//        int frameHeight = frame.getHeight();
+//
+//
+//        int[] previewLoc = new int[2];
+//        cameraPreview.getLocationOnScreen(previewLoc);
+//        int preFrameX = previewLoc[0];
+//        int preFrameY = previewLoc[1];
+//
+//
+//        // 返回截取结果
+////        return original;
+//        return Bitmap.createBitmap(scalaredImg, frameX-preFrameX, frameY-preFrameY, frameWidth, frameHeight);
+//    }
 
 
     // 获取屏幕宽高（pixel）
@@ -274,46 +338,37 @@ public class CameraActivity extends AppCompatActivity {
         Button cancelButton = findViewById(R.id.cancelButton);
 
         confirmButton.setOnClickListener(v -> {
-            saveImage(bitmapToByteArray(pic));
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("photoPath", photoPath);
-            setResult(RESULT_OK, resultIntent);
-            setContentView(R.layout.activity_camera);
-
-            // 重新获取视图对象
-            cameraPreview = findViewById(R.id.cameraPreview);
-            captureFrame = findViewById(R.id.captureFrame);
-            captureButton = findViewById(R.id.captureButton_1);
-            backButton = findViewById(R.id.backButton);
-
-            // 重新启动相机
-            startCamera();
-
-            // 设置按钮点击事件
-            captureButton.setOnClickListener(v1 -> capturePhoto());
-            backButton.setOnClickListener(v2 -> finish());
+            // 创建线程任务，在后台保存图片解保存图片时决卡顿的问题
+            executorService.execute(() -> {
+                // 图片保存完成后，通过主线程运行后续逻辑
+                runOnUiThread(() -> {
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("photoPath", photoPath);
+                    setResult(RESULT_OK, resultIntent);
+                    returnToCameraScreen();
+                });
+                saveImage(bitmapToByteArray(pic));
+            });
         });
 
-
         cancelButton.setOnClickListener(v -> {
-            setContentView(R.layout.activity_camera);
-
-            // 重新获取视图对象
-            cameraPreview = findViewById(R.id.cameraPreview);
-            captureFrame = findViewById(R.id.captureFrame);
-            captureButton = findViewById(R.id.captureButton_1);
-            backButton = findViewById(R.id.backButton);
-
-            // 重新启动相机
-            startCamera();
-
-            // 设置按钮点击事件
-            captureButton.setOnClickListener(v1 -> capturePhoto());
-            backButton.setOnClickListener(v2 -> finish());
+            returnToCameraScreen();
         });
     }
 
+    private void returnToCameraScreen() {
+        setContentView(R.layout.activity_camera);
+        cameraPreview = findViewById(R.id.cameraPreview);
+        captureButton = findViewById(R.id.captureButton_1);
+        backButton = findViewById(R.id.backButton);
 
+        // 重新启动相机
+        startCamera();
+
+        // 设置按钮点击事件
+        captureButton.setOnClickListener(v1 -> capturePhoto());
+        backButton.setOnClickListener(v2 -> finish());
+    }
 
     private void saveImage(byte[] data) {
         // 获取设备ID
