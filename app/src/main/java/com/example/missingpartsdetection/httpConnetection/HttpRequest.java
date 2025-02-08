@@ -17,7 +17,7 @@ public class HttpRequest {
     private final String url;
 
     public HttpRequest(String url){
-        String root_path = Constants.TARGET_IP_ADDRESS + ":" + Constants.PORT;
+        String root_path = "http://" + Constants.TARGET_IP_ADDRESS + ":" + Constants.PORT;
 
         this.url = root_path + url;
     }

@@ -66,6 +66,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        submitButton.setOnLongClickListener(v -> {
+            String deviceId = idInput.getText().toString().trim();
+            if (deviceId.isEmpty()) {
+                // 如果设备号为空，跳转到另一个页面
+                Intent intent = new Intent(MainActivity.this, DeveloperPageActivity.class);
+                startActivity(intent);
+                return true; // 表示已处理长按事件
+            }
+            return false; // 表示未处理长按事件
+        });
+
 
         imageView.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AlbumActivity.class);

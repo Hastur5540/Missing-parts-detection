@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 返回按钮 -->
+    <Button
+        android:id="@+id/backButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="返回"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true" />
+
+    <!-- 输入 IP 地址 -->
+    <EditText
+        android:id="@+id/ipInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="请输入新的 IP 地址"
+        android:inputType="text"
+        android:padding="12dp"
+        android:textSize="16sp" />
+
+    <!-- 输入端口号 -->
+    <EditText
+        android:id="@+id/portInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="请输入新的端口号"
+        android:inputType="number"
+        android:padding="12dp"
+        android:layout_marginTop="16dp"
+        android:textSize="16sp" />
+
+    <!-- 提交按钮 -->
+    <Button
+        android:id="@+id/updateButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="更新 IP 和端口号"
+        android:layout_marginTop="16dp"
+        android:padding="12dp" />
+</LinearLayout>
