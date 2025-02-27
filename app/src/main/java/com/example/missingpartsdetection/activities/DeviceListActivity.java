@@ -40,7 +40,7 @@ public class DeviceListActivity extends AppCompatActivity {
         searchButton = findViewById(R.id.searchButton);
 
         databaseHelper = new DatabaseHelper(this);
-        deviceList = databaseHelper.getAlldevices(); // 从数据库获取工人信息
+        deviceList = databaseHelper.getAlldevices();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, deviceList);
         deviceListView.setAdapter(adapter);
 

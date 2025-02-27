@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:hint="搜索工号" />
+            android:hint="搜索设备号" />
 
         <Button
             android:id="@+id/searchButton"

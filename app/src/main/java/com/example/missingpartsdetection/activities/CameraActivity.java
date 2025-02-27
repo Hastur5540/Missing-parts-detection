@@ -357,6 +357,16 @@ public class CameraActivity extends AppCompatActivity {
         String fileName = inOutFlag + d_id + "_" + System.currentTimeMillis() + ".jpg"; // 以时间戳确保文件名唯一
         File imageFile = new File(storageDir, fileName);
         photoPath = imageFile.getAbsolutePath();
+
+        // 解码图像数据以获取宽高
+        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+        if (bitmap != null) {
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            // 输出图像尺寸到日志
+            Log.d("CameraActivity", "Image saved: Width = " + width + ", Height = " + height);
+        }
+
         // 写入图片文件
         try (FileOutputStream fos = new FileOutputStream(imageFile)) {
             fos.write(data);
