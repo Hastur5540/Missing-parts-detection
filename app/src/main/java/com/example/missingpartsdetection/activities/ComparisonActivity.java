@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -37,6 +38,8 @@ public class ComparisonActivity extends AppCompatActivity {
     private Device device;
     private static List<Device> deviceList = new ArrayList<>();
     String photoPath_OUT = "";
+    private ArrayList<Bitmap> bitmapsList_IN = new ArrayList<>();
+    private ArrayList<Bitmap> bitmapsList_OUT = new ArrayList<>();
     Boolean Consistent_flags;
     private RelativeLayout loadingView; // 加载动画视图
     private DatabaseHelper databaseHelper;
@@ -44,11 +47,6 @@ public class ComparisonActivity extends AppCompatActivity {
     // 得到的的处理后的图片
     String image1Base64 = null;
     String image2Base64 = null;
-
-    String imageInCheckedPath = null;
-    String imageOutCheckedPath = null;
-    Bundle bundle_In = new Bundle();
-    Bundle bundle_Out = new Bundle();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,15 +166,20 @@ public class ComparisonActivity extends AppCompatActivity {
                         hideLoading();
                         // 准备跳转到新页面
                         Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
-                        if(device.getId().equals("000")){
-                            intent.putExtra("tools_IN", device.getPhotoPath());
-                        }else{
-                            intent.putExtra("tools_IN", bundle_In);
-                            intent.putExtra("tools_OUT", bundle_Out);
-                            intent.putExtra("in_checked_path", imageInCheckedPath);
-                            intent.putExtra("out_checked_path", imageOutCheckedPath);
+                        // 添加图片到列表
+                        ArrayList<String> photoList_IN = loadImagesFromDevice("in");
+                        ArrayList<String> photoList_OUT = loadImagesFromDevice("out");
+                        for (String file : photoList_IN) {
+                            Bitmap bitmapIn = BitmapFactory.decodeFile(file);
+                            bitmapsList_IN.add(bitmapIn);
+                        }   
+                        for (String file : photoList_OUT) {
+                            Bitmap bitmapOut = BitmapFactory.decodeFile(file);
+                            bitmapsList_IN.add(bitmapOut);
                         }
-                        startActivityForResult(intent, 2);
+                        intent.putParcelableArrayListExtra("leftImages", bitmapsList_IN); // 发送位图列表
+                        intent.putParcelableArrayListExtra("rightImages", bitmapsList_OUT);
+                        startActivity(intent);
                     });
                 }).start();
             }
@@ -201,6 +204,26 @@ public class ComparisonActivity extends AppCompatActivity {
         return deviceFolderName;
     }
 
+    private ArrayList<String> loadImagesFromDevice(String inOutFlag) {
+        ArrayList<String> photoList = new ArrayList<>();
+        String deviceFolderName = "Device_" + device.getId(); // 使用设备ID命名文件夹
+        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
+
+        if (storageDir.exists()) {
+            File[] files = storageDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    inOutFlag = inOutFlag + "_";
+                    String fileName = inOutFlag + device.getId();
+                    if (file.isFile() && file.getName().startsWith(fileName)) {
+                        photoList.add(file.getAbsolutePath());
+                    }
+                }
+            }
+        }
+        return photoList;
+    }
+
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE); // 显示加载动画
     }
@@ -216,17 +239,6 @@ public class ComparisonActivity extends AppCompatActivity {
             photoPath_OUT = data.getStringExtra("photoPath");
             Bitmap bitmap = BitmapFactory.decodeFile(photoPath_OUT);
             deviceImageView_OUT.setImageBitmap(bitmap);
-        }
-        if (requestCode == 2 && resultCode == RESULT_OK) {
-            Consistent_flags = data.getBooleanExtra("Consistent_flags", false);
-            bundle_In.clear();
-            bundle_Out.clear();
-            if(Consistent_flags){
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("worker", device);
-                setResult(RESULT_OK, resultIntent);
-                finish();
-            }
         }
     }
 

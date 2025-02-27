@@ -12,11 +12,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,12 +57,11 @@ public class CameraActivity extends AppCompatActivity {
     // Add these constants for request codes
     private static final int PICK_IMAGE_REQUEST = 102;
 
-    private String photoPath;
+    private String photoPath="";
     private String d_id = null;
 
     private ImageCapture capturedImg;
 //    private View captureFrame;
-    private Bitmap croppedImg;
     private HashMap<String, Integer> screenHW = new HashMap<>();
 
 
@@ -73,6 +74,8 @@ public class CameraActivity extends AppCompatActivity {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    private int photoCount = 0; // Photo count
+    private TextView photoCountTextView; // Reference for the TextView
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +89,7 @@ public class CameraActivity extends AppCompatActivity {
         overlayImageView = findViewById(R.id.overlayImageView);
         selectPhotoButton = findViewById(R.id.selectPhotoButton);
         seekBar = findViewById(R.id.seekBar);
+        photoCountTextView = findViewById(R.id.photoCountTextView);
 
         // 得当前activity的h 和 w
         getScreenHW(this);
@@ -107,7 +111,11 @@ public class CameraActivity extends AppCompatActivity {
 
 
         captureButton.setOnClickListener(v -> capturePhoto());
-        backButton.setOnClickListener(v -> finish());
+
+        backButton.setOnClickListener(v -> {
+
+            finish(); // 结束当前活动
+        });
 
         // Check "inOutFlag" and show button/seekBar for "out"
         String inOutFlag = getIntent().getStringExtra("inOutFlag");
@@ -241,27 +249,31 @@ public class CameraActivity extends AppCompatActivity {
         capturedImg.takePicture(ContextCompat.getMainExecutor(this), new ImageCapture.OnImageCapturedCallback() {
             @Override
             public void onCaptureSuccess(@NonNull ImageProxy image) {
-
                 // 图片处理流程： 旋转，放缩，截取。
                 Bitmap bitmap = imageProxyToBitmap(image);
 
 //                croppedImg = cropBitmapToFrame(bitmap, captureFrame);
-                croppedImg = bitmap;
 
-                runOnUiThread(() -> toCheckView(croppedImg));
-
+                executorService.execute(() -> {
+                    // 图片保存完成后，通过主线程运行后续逻辑
+                    runOnUiThread(() -> {
+                        returnToCameraScreen();
+                    });
+                    saveImage(bitmapToByteArray(bitmap));
+                    Log.d("CameraActivity", "photoPath: " + photoPath);
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("photoPath", photoPath);
+                    setResult(RESULT_OK, resultIntent);
+                });
                 image.close();
 
 //                Toast.makeText(CameraActivity.this, "Captured and cropped image obtained", Toast.LENGTH_SHORT).show();
             }
-
             @Override
             public void onError(@NonNull ImageCaptureException exception) {
                 exception.printStackTrace();
             }
         });
-
-
     }
 
 
@@ -324,47 +336,40 @@ public class CameraActivity extends AppCompatActivity {
         screenHW.put("width", displayMetrics.widthPixels);
     }
 
-
-    private void toCheckView(Bitmap pic){
-        setContentView(R.layout.captured_photo_check);
-        imageView = findViewById(R.id.previewImageView);
-
-
-        Bitmap picForDisplay = Bitmap.createScaledBitmap(pic, screenHW.get("width"), (int)(screenHW.get("width") * CAMERA_PREVIEW_HW_RATIO), true);
-        imageView.setImageBitmap(picForDisplay);
-
-
-        Button confirmButton = findViewById(R.id.confirmButton);
-        Button cancelButton = findViewById(R.id.cancelButton);
-
-        confirmButton.setOnClickListener(v -> {
-            // 创建线程任务，在后台保存图片解保存图片时决卡顿的问题
-            executorService.execute(() -> {
-                // 图片保存完成后，通过主线程运行后续逻辑
-                runOnUiThread(() -> {
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("photoPath", photoPath);
-                    setResult(RESULT_OK, resultIntent);
-                    returnToCameraScreen();
-                });
-                saveImage(bitmapToByteArray(pic));
-            });
-        });
-
-        cancelButton.setOnClickListener(v -> {
-            returnToCameraScreen();
-        });
-    }
-
     private void returnToCameraScreen() {
-        setContentView(R.layout.activity_camera);
-        cameraPreview = findViewById(R.id.cameraPreview);
-        captureButton = findViewById(R.id.captureButton_1);
-        backButton = findViewById(R.id.backButton);
+        if ("out".equals(getIntent().getStringExtra("inOutFlag"))) {
+            selectPhotoButton.setVisibility(View.VISIBLE);
+            seekBar.setVisibility(View.VISIBLE);
+
+            // Select photo button click listener
+            selectPhotoButton.setOnClickListener(v -> choosePhoto());
+
+            // SeekBar listener to adjust transparency
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    float alpha = progress / 100f; // Convert to a fraction
+                    overlayImageView.setAlpha(alpha); // Set transparency
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }else{
+            setContentView(R.layout.activity_camera);
+            cameraPreview = findViewById(R.id.cameraPreview);
+            captureButton = findViewById(R.id.captureButton_1);
+            backButton = findViewById(R.id.backButton);
+        }
 
         // 重新启动相机
         startCamera();
-
+        photoCountTextView = findViewById(R.id.photoCountTextView);
+        photoCount++; // 每次捕获成功后，增加照片数量
+        photoCountTextView.setText("已拍摄: " + photoCount + " 张"); // 更新文本提示
         // 设置按钮点击事件
         captureButton.setOnClickListener(v1 -> capturePhoto());
         backButton.setOnClickListener(v2 -> finish());
@@ -385,7 +390,6 @@ public class CameraActivity extends AppCompatActivity {
         String fileName = inOutFlag + d_id + "_" + System.currentTimeMillis() + ".jpg"; // 以时间戳确保文件名唯一
         File imageFile = new File(storageDir, fileName);
         photoPath = imageFile.getAbsolutePath();
-
         // 写入图片文件
         try (FileOutputStream fos = new FileOutputStream(imageFile)) {
             fos.write(data);
