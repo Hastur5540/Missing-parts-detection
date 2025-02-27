@@ -166,13 +166,26 @@ public class ComparisonActivity extends AppCompatActivity {
                         hideLoading();
                         // 准备跳转到新页面
                         Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
+
                         // 添加图片到列表
                         ArrayList<String> photoList_IN = loadImagesFromDevice("in");
                         ArrayList<String> photoList_OUT = loadImagesFromDevice("out");
+                        // 添加左组图片资源ID
+                        photoList_IN.add(String.valueOf(R.drawable.peizhun_1));
+                        photoList_IN.add(String.valueOf(R.drawable.peizhun_2));
+                        photoList_IN.add(String.valueOf(R.drawable.peizhun_6));
+
+                        // 添加右组图片资源ID
+                        photoList_OUT.add(String.valueOf(R.drawable.all_1_11));
+                        photoList_OUT.add(String.valueOf(R.drawable.all_2_11));
+                        photoList_OUT.add(String.valueOf(R.drawable.all_6_10));
+
+                        ArrayList<String> photoList = loadAllImagesFromDevice();
+
                         for (String file : photoList_IN) {
                             Bitmap bitmapIn = BitmapFactory.decodeFile(file);
                             bitmapsList_IN.add(bitmapIn);
-                        }   
+                        }
                         for (String file : photoList_OUT) {
                             Bitmap bitmapOut = BitmapFactory.decodeFile(file);
                             bitmapsList_IN.add(bitmapOut);
@@ -218,6 +231,22 @@ public class ComparisonActivity extends AppCompatActivity {
                     if (file.isFile() && file.getName().startsWith(fileName)) {
                         photoList.add(file.getAbsolutePath());
                     }
+                }
+            }
+        }
+        return photoList;
+    }
+
+    private ArrayList<String> loadAllImagesFromDevice() {
+        ArrayList<String> photoList = new ArrayList<>();
+        String deviceFolderName = "Device_" + device.getId(); // 使用设备ID命名文件夹
+        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
+
+        if (storageDir.exists()) {
+            File[] files = storageDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    photoList.add(file.getAbsolutePath());
                 }
             }
         }
