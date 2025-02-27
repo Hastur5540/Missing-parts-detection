@@ -23,6 +23,8 @@ import com.example.missingpartsdetection.utils.ImageProcess;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.json.JSONException;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,51 +116,16 @@ public class ComparisonActivity extends AppCompatActivity {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-
-
-//                    HttpRequest httpRequest = new HttpRequest("/process_image");
-//                    String photoPath = device.getPhotoPath();
-//
-//                    ArrayList<Map<String, Object>> result1 = null;
-//                    ArrayList<Map<String, Object>> result2 = null;
-//
-//                    try {
-//                        String response = httpRequest.getCompareResult(photoPathIn, photoPathOut);
-//                        ObjectMapper objectMapper = new ObjectMapper();
-//                        Map<String, Object> responseJson = objectMapper.readValue(response, new TypeReference<Map<String, Object>>(){});
-//
-//                        image1Base64 = Objects.requireNonNull(responseJson.get("image_base64_1")).toString();
-//                        image2Base64 = Objects.requireNonNull(responseJson.get("image_base64_2")).toString();
-//                        String image1CheckedPath = device.getId() + "_IN_Checked.jpg";
-//                        String image2CheckedPath = device.getId() + "_OUT_Checked.jpg";
-//                        ImageProcess imageProcess = new ImageProcess();
-//                        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-//                        imageInCheckedPath = new File(storageDir, image1CheckedPath).getAbsolutePath();
-//                        imageOutCheckedPath = new File(storageDir, image2CheckedPath).getAbsolutePath();
-//                        imageProcess.saveBase64ToFile(image1Base64, imageInCheckedPath);
-//                        imageProcess.saveBase64ToFile(image2Base64, imageOutCheckedPath);
-//
-//                        result1 = (ArrayList<Map<String, Object>>) responseJson.get("result1");
-//                        result2 = (ArrayList<Map<String, Object>>) responseJson.get("result2");
-//
-//                        if (result1 != null){
-//                            for (Map<String, Object> result: result1) {
-//                                String className = result.get("class_name").toString();
-//                                int num = Integer.parseInt(result.get("count").toString());
-//                                bundle_In.putInt(className, num);
-//                            }
-//                        }
-//                        if (result2!=null){
-//                            for (Map<String, Object> result:
-//                                    result2) {
-//                                String className = result.get("class_name").toString();
-//                                int num = Integer.parseInt(result.get("count").toString());
-//                                bundle_Out.putInt(className, num);
-//                            }
-//                        }
-//                    } catch (IOException e) {
-//                        throw new RuntimeException(e);
-//                    }
+                    HttpRequest httpRequest = new HttpRequest("/upload_json");
+                    ArrayList<String> photoList = loadAllImagesFromDevice();
+                    try {
+                            String response = httpRequest.getCompareResult(photoList);
+                            ObjectMapper objectMapper = new ObjectMapper();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
 
 
                     // 处理结束后，更新UI
@@ -179,8 +146,6 @@ public class ComparisonActivity extends AppCompatActivity {
                         photoList_OUT.add(String.valueOf(R.drawable.all_1_11));
                         photoList_OUT.add(String.valueOf(R.drawable.all_2_11));
                         photoList_OUT.add(String.valueOf(R.drawable.all_6_10));
-
-                        ArrayList<String> photoList = loadAllImagesFromDevice();
 
                         for (String file : photoList_IN) {
                             Bitmap bitmapIn = BitmapFactory.decodeFile(file);
