@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +83,7 @@ public class ComparisonActivity extends AppCompatActivity {
         deviceImageView_IN.setOnClickListener(v -> {
             Intent intent = new Intent(ComparisonActivity.this, AlbumActivity.class);
             intent.putExtra("DeviceId", device.getId());
+            intent.putExtra("temp", "notTemp");
             intent.putExtra("inOutFlag", "in");
             startActivity(intent);
         });
@@ -89,6 +91,7 @@ public class ComparisonActivity extends AppCompatActivity {
         deviceImageView_OUT.setOnClickListener(v -> {
             Intent intent = new Intent(ComparisonActivity.this, AlbumActivity.class);
             intent.putExtra("DeviceId", device.getId());
+            intent.putExtra("temp", "notTemp");
             intent.putExtra("inOutFlag", "out");
             startActivity(intent);
         });
@@ -116,16 +119,16 @@ public class ComparisonActivity extends AppCompatActivity {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    HttpRequest httpRequest = new HttpRequest("/upload_json");
-                    ArrayList<String> photoList = loadAllImagesFromDevice();
-                    try {
-                            String response = httpRequest.getCompareResult(photoList);
-                            ObjectMapper objectMapper = new ObjectMapper();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
+//                    HttpRequest httpRequest = new HttpRequest("/upload_json");
+//                    ArrayList<String> photoList = loadAllImagesFromDevice();
+//                    try {
+//                            String response = httpRequest.getCompareResult(photoList);
+//                            ObjectMapper objectMapper = new ObjectMapper();
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    } catch (JSONException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
 
                     // 处理结束后，更新UI
@@ -134,29 +137,29 @@ public class ComparisonActivity extends AppCompatActivity {
                         // 准备跳转到新页面
                         Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
 
-                        // 添加图片到列表
-                        ArrayList<String> photoList_IN = loadImagesFromDevice("in");
-                        ArrayList<String> photoList_OUT = loadImagesFromDevice("out");
-                        // 添加左组图片资源ID
-                        photoList_IN.add(String.valueOf(R.drawable.peizhun_1));
-                        photoList_IN.add(String.valueOf(R.drawable.peizhun_2));
-                        photoList_IN.add(String.valueOf(R.drawable.peizhun_6));
-
-                        // 添加右组图片资源ID
-                        photoList_OUT.add(String.valueOf(R.drawable.all_1_11));
-                        photoList_OUT.add(String.valueOf(R.drawable.all_2_11));
-                        photoList_OUT.add(String.valueOf(R.drawable.all_6_10));
-
-                        for (String file : photoList_IN) {
-                            Bitmap bitmapIn = BitmapFactory.decodeFile(file);
-                            bitmapsList_IN.add(bitmapIn);
-                        }
-                        for (String file : photoList_OUT) {
-                            Bitmap bitmapOut = BitmapFactory.decodeFile(file);
-                            bitmapsList_IN.add(bitmapOut);
-                        }
-                        intent.putParcelableArrayListExtra("leftImages", bitmapsList_IN); // 发送位图列表
-                        intent.putParcelableArrayListExtra("rightImages", bitmapsList_OUT);
+//                        // 添加图片到列表
+//                        ArrayList<String> photoList_IN = loadImagesFromDevice("in");
+//                        ArrayList<String> photoList_OUT = loadImagesFromDevice("out");
+//                        // 添加左组图片资源ID
+//                        photoList_IN.add(String.valueOf(R.drawable.peizhun_1));
+//                        photoList_IN.add(String.valueOf(R.drawable.peizhun_2));
+//                        photoList_IN.add(String.valueOf(R.drawable.peizhun_6));
+//
+//                        // 添加右组图片资源ID
+//                        photoList_OUT.add(String.valueOf(R.drawable.all_1_11));
+//                        photoList_OUT.add(String.valueOf(R.drawable.all_2_11));
+//                        photoList_OUT.add(String.valueOf(R.drawable.all_6_10));
+//
+//                        for (String file : photoList_IN) {
+//                            Bitmap bitmapIn = BitmapFactory.decodeFile(file);
+//                            bitmapsList_IN.add(bitmapIn);
+//                        }
+//                        for (String file : photoList_OUT) {
+//                            Bitmap bitmapOut = BitmapFactory.decodeFile(file);
+//                            bitmapsList_IN.add(bitmapOut);
+//                        }
+//                        intent.putParcelableArrayListExtra("leftImages", bitmapsList_IN); // 发送位图列表
+//                        intent.putParcelableArrayListExtra("rightImages", bitmapsList_OUT);
                         startActivity(intent);
                     });
                 }).start();

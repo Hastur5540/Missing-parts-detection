@@ -6,57 +6,23 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- 返回按钮 -->
     <Button
         android:id="@+id/backButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="返回"
         android:backgroundTint="#FF6200EE"
-        android:textColor="#FFFFFF"
-        android:layout_gravity="start" />
+        android:textColor="#FFFFFF" />
 
-    <!-- 上部用于显示对比结果 -->
-    <TextView
-        android:id="@+id/tvComparisonResult"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_marginBottom="16dp"
-        android:text="零件一致"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#FF0000" />
-
-    <!-- 包含左组和右组的图片容器 -->
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:weightSum="2"
         android:layout_marginTop="16dp">
 
-        <!-- 左侧图片组 -->
         <LinearLayout
-            android:id="@+id/leftGroup"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="#EEEEEE">
-        </LinearLayout>
-
-        <!-- 右侧图片组 -->
-        <LinearLayout
-            android:id="@+id/rightGroup"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="#DDDDDD">
-        </LinearLayout>
-
-    </LinearLayout>
+            android:id="@+id/imageGroupsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
 </LinearLayout>

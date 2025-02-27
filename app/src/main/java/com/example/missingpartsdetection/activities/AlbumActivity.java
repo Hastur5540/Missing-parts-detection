@@ -63,7 +63,7 @@ public class AlbumActivity extends AppCompatActivity {
     private void loadImagesFromDevice() {
         Log.d("AlbumActivity", "loadImagesFromDevice");
         String deviceFolderName = "";
-        if(getIntent().getStringExtra("inOutFlag").equals("temp")){
+        if(getIntent().getStringExtra("temp").equals("temp")){
             deviceFolderName = "Device_temp";
         }else{
             deviceFolderName = "Device_" + d_id;

@@ -101,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
         imageView.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AlbumActivity.class);
             intent.putExtra("DeviceId", idInput.getText().toString());
+            intent.putExtra("temp", "temp");
             intent.putExtra("inOutFlag", "in");
             startActivity(intent);
         });
