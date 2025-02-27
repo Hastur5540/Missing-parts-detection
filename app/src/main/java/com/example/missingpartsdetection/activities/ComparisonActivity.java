@@ -96,7 +96,7 @@ public class ComparisonActivity extends AppCompatActivity {
             Intent intent = new Intent(ComparisonActivity.this, CameraActivity.class);
             intent.putExtra("DeviceId", device.getId());
             intent.putExtra("inOutFlag", "out");
-            startActivityForResult(intent, 1);
+            startActivityForResult(intent, 2);
         });
 
         // Compare button functionality
@@ -235,8 +235,9 @@ public class ComparisonActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1 && resultCode == RESULT_OK) {
+        if (requestCode == 2 && resultCode == RESULT_OK) {
             photoPath_OUT = data.getStringExtra("photoPath");
+            Log.e("ComparisonActivity", "inside："+photoPath_OUT);
             Bitmap bitmap = BitmapFactory.decodeFile(photoPath_OUT);
             deviceImageView_OUT.setImageBitmap(bitmap);
         }

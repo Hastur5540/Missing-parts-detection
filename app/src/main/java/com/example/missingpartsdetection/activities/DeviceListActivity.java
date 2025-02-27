@@ -46,6 +46,8 @@ public class DeviceListActivity extends AppCompatActivity {
 
         // 返回按钮点击事件
         backButton.setOnClickListener(v -> {
+            Intent intent = new Intent(DeviceListActivity.this, MainActivity.class);
+            startActivity(intent);
             finish();
         });
 

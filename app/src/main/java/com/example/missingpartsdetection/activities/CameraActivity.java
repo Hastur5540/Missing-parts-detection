@@ -7,10 +7,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -226,7 +224,8 @@ public class CameraActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         returnToCameraScreen();
                     });
-                    saveImage(bitmapToByteArray(bitmap));
+                    String inOutFlag = getIntent().getStringExtra("inOutFlag");
+                    saveImage(bitmapToByteArray(bitmap), inOutFlag);
                     Log.d("CameraActivity", "photoPath: " + photoPath);
                     Intent resultIntent = new Intent();
                     resultIntent.putExtra("photoPath", photoPath);
@@ -342,9 +341,14 @@ public class CameraActivity extends AppCompatActivity {
         backButton.setOnClickListener(v2 -> finish());
     }
 
-    private void saveImage(byte[] data) {
+    private void saveImage(byte[] data, String inOutFlag) {
         // 获取设备ID
-        String deviceFolderName = "Device_" + d_id; // 使用设备ID命名文件夹
+        String deviceFolderName = "";
+        if ("out".equals(inOutFlag)){
+            deviceFolderName = "Device_"+d_id;
+        }else{
+            deviceFolderName = "Device_temp"; // 暂时存储图片
+        }
         File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
 
         // 创建文件夹，如果不存在则创建
@@ -353,7 +357,7 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         // 创建图片文件名
-        String inOutFlag = getIntent().getStringExtra("inOutFlag") + "_";
+        inOutFlag = getIntent().getStringExtra("inOutFlag") + "_";
         String fileName = inOutFlag + d_id + "_" + System.currentTimeMillis() + ".jpg"; // 以时间戳确保文件名唯一
         File imageFile = new File(storageDir, fileName);
         photoPath = imageFile.getAbsolutePath();

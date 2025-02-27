@@ -61,8 +61,13 @@ public class AlbumActivity extends AppCompatActivity {
     }
 
     private void loadImagesFromDevice() {
-
-        String deviceFolderName = "Device_" + d_id; // 使用设备ID命名文件夹
+        Log.d("AlbumActivity", "loadImagesFromDevice");
+        String deviceFolderName = "";
+        if(getIntent().getStringExtra("inOutFlag").equals("temp")){
+            deviceFolderName = "Device_temp";
+        }else{
+            deviceFolderName = "Device_" + d_id;
+        }
         File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
 
         if (storageDir.exists()) {
