@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Size;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -182,13 +183,6 @@ public class CameraActivity extends AppCompatActivity {
 
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-        if (CAMERA_PREVIEW_HW_RATIO != -1){
-            reshapeView(cameraPreview, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO), screenHW.get("width"), CAMERA_PREVIEW_HW_RATIO);
-//            reshapeView(captureFrame, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO * 0.8), (int) (screenHW.get("width") * FRAME_CAMERAPREVIEW_RATIO), CAPTURE_FRAME_HW_RATIO);
-        }
-
-
-
 
         cameraProviderFuture.addListener(() -> {
             try {
@@ -199,47 +193,20 @@ public class CameraActivity extends AppCompatActivity {
 
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
 
-                capturedImg = new ImageCapture.Builder().build();
+                // 修改ImageCapture的设置以支持1280x720
+                ImageCapture.Builder builder = new ImageCapture.Builder();
+                builder.setTargetResolution(new Size(1280, 720)); // 设置目标分辨率
+
+                capturedImg = builder.build();
 
                 processCameraProvider.unbindAll();
-
-                if (CAMERA_PREVIEW_HW_RATIO == -1) {
-                    processCameraProvider.bindToLifecycle(this, cameraSelector, capturedImg);
-                    capturedImg.takePicture(ContextCompat.getMainExecutor(this), new ImageCapture.OnImageCapturedCallback() {
-                        @Override
-                        public void onCaptureSuccess(@NonNull ImageProxy image) {
-
-                            int rotationDegree = image.getImageInfo().getRotationDegrees();
-                            if (rotationDegree == 0 || rotationDegree == 180)
-                                CAMERA_PREVIEW_HW_RATIO = (float) image.getHeight() / image.getWidth();
-                            if (rotationDegree == 90 || rotationDegree == 270)
-                                CAMERA_PREVIEW_HW_RATIO = (float) image.getWidth() / image.getHeight();
-
-                            reshapeView(cameraPreview, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO), screenHW.get("width"), CAMERA_PREVIEW_HW_RATIO);
-//                            reshapeView(captureFrame, (int) (screenHW.get("height") * MAX_HEIGHT_RATIO * 0.8), (int) (screenHW.get("width") * FRAME_CAMERAPREVIEW_RATIO), CAPTURE_FRAME_HW_RATIO);
-
-                            image.close();
-
-
-                            processCameraProvider.bindToLifecycle(CameraActivity.this, cameraSelector, preview);
-                        }
-
-                        @Override
-                        public void onError(@NonNull ImageCaptureException exception) {
-                            exception.printStackTrace();
-                        }
-                    });
-                }else{
-                    processCameraProvider.bindToLifecycle(this, cameraSelector, preview, capturedImg);
-                }
-
+                processCameraProvider.bindToLifecycle(this, cameraSelector, preview, capturedImg);
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
         }, ContextCompat.getMainExecutor(this));
-
-
     }
+
 
 
     private void capturePhoto() {
