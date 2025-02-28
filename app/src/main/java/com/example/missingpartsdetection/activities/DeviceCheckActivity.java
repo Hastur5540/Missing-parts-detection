@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.missingpartsdetection.R;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 
 public class DeviceCheckActivity extends AppCompatActivity {
 
@@ -139,6 +141,7 @@ public class DeviceCheckActivity extends AppCompatActivity {
 
         // Add left-side image with margin
         ImageView leftImage = createImageView(leftBitmap, 1);
+        leftImage.setOnClickListener(v -> showEnlargedImage(leftBitmap));
         LinearLayout.LayoutParams leftParams = (LinearLayout.LayoutParams) leftImage.getLayoutParams();
         leftParams.setMargins(dpToPx(8), dpToPx(8), dpToPx(0), dpToPx(8)); // Set left margins
         leftImage.setLayoutParams(leftParams);
@@ -154,6 +157,7 @@ public class DeviceCheckActivity extends AppCompatActivity {
 
         // Add right-side image with margin
         ImageView rightImage = new ImageView(this);
+        rightImage.setOnClickListener(v -> showEnlargedImage(rightBitmap));
         rightImage.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -191,6 +195,18 @@ public class DeviceCheckActivity extends AppCompatActivity {
         imageGroupsContainer.addView(groupContainer);
     }
 
+    private void showEnlargedImage(Bitmap bitmap) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        ImageView imageView = new ImageView(this);
+        imageView.setImageBitmap(bitmap);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+        // 设置对话框属性
+        builder.setView(imageView)
+                .setPositiveButton("关闭", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
+    }
 
     private ImageView createImageView(Bitmap bitmap, float weight) {
         ImageView imageView = new ImageView(this);
@@ -203,6 +219,7 @@ public class DeviceCheckActivity extends AppCompatActivity {
         imageView.setLayoutParams(params);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         imageView.setImageBitmap(bitmap);
+        imageView.setOnClickListener(v -> showEnlargedImage(bitmap));
         return imageView;
     }
 
