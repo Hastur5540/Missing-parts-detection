@@ -1,8 +1,15 @@
 package com.example.missingpartsdetection.httpConnetection;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.missingpartsdetection.utils.Constants;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -11,6 +18,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,6 +27,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Iterator;
+import java.util.List;
 
 public class HttpRequest {
 
@@ -31,7 +41,7 @@ public class HttpRequest {
     }
 
 
-    public String getCompareResult(ArrayList<String> photosPath) throws IOException, JSONException {
+    public String getCompareResult(ArrayList<String> photosPath, String modelPath) throws IOException, JSONException {
 //        System.out.println(this.url);
         JSONObject jsonObject = new JSONObject();
         JSONArray photosArray = new JSONArray();
@@ -69,7 +79,26 @@ public class HttpRequest {
         }
 
         jsonResponse = response.toString();
+        ObjectMapper objMapper = new ObjectMapper();
 
+        try{
+            JsonNode jsonNode = objMapper.readTree(jsonResponse);
+            JsonNode processedImagesList = jsonNode.get("shuchu_images");
+            // 遍历这个数组
+            Iterator<JsonNode> elements = processedImagesList.iterator();
+            while (elements.hasNext()) {
+                JsonNode node = elements.next();
+
+                // 获取每个元素中的字段
+                String name = node.get("filename").asText();
+                String imageBase64 = node.get("base64").asText();
+
+                byte[] imageBytes = Base64.getDecoder().decode(imageBase64);
+                this.saveReturnedImage(imageBytes, name, modelPath);
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return jsonResponse;
     }
@@ -81,6 +110,29 @@ public class HttpRequest {
         fileInputStream.read(imageBytes);
         fileInputStream.close();
         return Base64.getEncoder().encodeToString(imageBytes);
+    }
+
+
+    public void saveReturnedImage(byte[] data, String name, String filePath) {
+        String savePath = filePath.substring(0, filePath.lastIndexOf("/") + 1) + name + ".jpg";
+        File saveFile = new File(savePath);
+        if (!saveFile.exists() && !saveFile.mkdirs()) {
+            return;
+        }
+        // 解码图像数据以获取宽高
+        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+        if (bitmap != null) {
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            // 输出图像尺寸到日志
+            Log.d("CameraActivity", "Image saved: Width = " + width + ", Height = " + height);
+        }
+        // 写入图片文件
+        try (FileOutputStream fos = new FileOutputStream(savePath)) {
+            fos.write(data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 //
 //

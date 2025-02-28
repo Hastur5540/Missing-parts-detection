@@ -19,19 +19,14 @@ import com.example.missingpartsdetection.R;
 import com.example.missingpartsdetection.database.DatabaseHelper;
 import com.example.missingpartsdetection.entity.Device;
 import com.example.missingpartsdetection.httpConnetection.HttpRequest;
-import com.example.missingpartsdetection.utils.ImageProcess;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.json.JSONException;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class ComparisonActivity extends AppCompatActivity {
     private EditText toolsInput;
@@ -113,22 +108,22 @@ public class ComparisonActivity extends AppCompatActivity {
                 showLoading();
                 new Thread(() -> {
                     // 模拟处理延时
-                    try {
-                        Thread.sleep(2000);// 实际比较逻辑将放置在这里
-
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-//                    HttpRequest httpRequest = new HttpRequest("/upload_json");
-//                    ArrayList<String> photoList = loadAllImagesFromDevice();
 //                    try {
-//                            String response = httpRequest.getCompareResult(photoList);
-//                            ObjectMapper objectMapper = new ObjectMapper();
-//                    } catch (IOException e) {
-//                        throw new RuntimeException(e);
-//                    } catch (JSONException e) {
-//                        throw new RuntimeException(e);
+//                        Thread.sleep(2000);// 实际比较逻辑将放置在这里
+//
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
 //                    }
+                    HttpRequest httpRequest = new HttpRequest("/upload_json");
+
+                    ArrayList<String> photoList = loadAllImagesFromDevice();
+                    try {
+                            String response = httpRequest.getCompareResult(photoList, photoPath_OUT);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
 
 
                     // 处理结束后，更新UI
