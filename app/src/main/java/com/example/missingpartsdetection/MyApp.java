@@ -3,6 +3,7 @@ package com.example.missingpartsdetection;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import android.os.Environment;
 
 import com.example.missingpartsdetection.entity.Device;
 
@@ -22,7 +23,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     public void onCreate() {
         super.onCreate();
         registerActivityLifecycleCallbacks(this);
-        loadWorkers(); // 加载 workerList
+        loadDevices();
     }
 
     @Override
@@ -38,12 +39,23 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
         activityReferences--;
         if (activityReferences == 0) {
             // 最后一个 Activity 被停止时，保存 workerList
-            saveWorkers();
+            saveDevices();
+            File tempDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Device_temp");
+            File[] tempFiles = tempDir.listFiles();
+            for (File tempFile : tempFiles) {
+                if (tempFile.delete()) {
+                    // 成功删除文件
+                    System.out.println("Deleted: " + tempFile.getName());
+                } else {
+                    // 删除失败
+                    System.out.println("Failed to delete: " + tempFile.getName());
+                }
+            }
             //cleanUpResources();
         }
     }
 
-    private void loadWorkers() {
+    private void loadDevices() {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilesDir() + "/" + FILE_NAME))) {
             deviceList = (List<Device>) ois.readObject();
         } catch (Exception e) {
@@ -52,7 +64,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
         }
     }
 
-    private void saveWorkers() {
+    private void saveDevices() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(getFilesDir() + "/" + FILE_NAME))) {
             oos.writeObject(deviceList);
         } catch (Exception e) {

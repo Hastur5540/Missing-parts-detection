@@ -108,6 +108,11 @@ public class CameraActivity extends AppCompatActivity {
 
         startCamera();
 
+        overlayImageView.setOnClickListener(v -> {
+            if (overlayImageView.getVisibility() == View.VISIBLE) {
+                overlayImageView.setVisibility(View.GONE); // 点击后隐藏
+            }
+        });
 
         captureButton.setOnClickListener(v -> capturePhoto());
 
