@@ -75,14 +75,13 @@ public class HttpRequest {
             httpConn.setDoOutput(true);
             httpConn.setRequestMethod("POST");
             httpConn.setRequestProperty("Content-Type", "application/json");
-            httpConn.setConnectTimeout(5000); // 5秒连接超时
-            httpConn.setReadTimeout(10000); // 10秒读取超时
+//            httpConn.setConnectTimeout(30000); // 5秒连接超时
+//            httpConn.setReadTimeout(30000); // 10秒读取超时
 
             // 发送请求
-            try (OutputStream outputStream = httpConn.getOutputStream()) {
-                outputStream.write(jsonObject.toString().getBytes());
-                outputStream.flush();
-            }
+            OutputStream outputStream = httpConn.getOutputStream();
+            outputStream.write(jsonObject.toString().getBytes());
+            outputStream.flush();
 
             // 获取响应码
             int responseCode = httpConn.getResponseCode();
@@ -149,11 +148,13 @@ public class HttpRequest {
 
 
     public void saveReturnedImage(byte[] data, String name, String filePath) {
-        String savePath = filePath.substring(0, filePath.lastIndexOf("/") + 1) + name + ".jpg";
+        String savePath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
         File saveFile = new File(savePath);
         if (!saveFile.exists() && !saveFile.mkdirs()) {
             return;
         }
+
+        savePath = savePath + name;
         // 解码图像数据以获取宽高
         Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
         if (bitmap != null) {

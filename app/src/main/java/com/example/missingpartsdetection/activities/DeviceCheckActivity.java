@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup;
@@ -17,7 +18,9 @@ import android.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.missingpartsdetection.R;
+import com.example.missingpartsdetection.entity.Device;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +36,7 @@ public class DeviceCheckActivity extends AppCompatActivity {
     private ArrayList<Bitmap> rightImages = new ArrayList<Bitmap>();
     private ArrayList<String> leftImageNames = new ArrayList<String>();
     private ArrayList<String> rightImageNames = new ArrayList<String>();
-
+    private String deviceId = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,24 +44,9 @@ public class DeviceCheckActivity extends AppCompatActivity {
 
         imageGroupsContainer = findViewById(R.id.imageGroupsContainer);
         backButton = findViewById(R.id.backButton);
+        deviceId = (String) getIntent().getSerializableExtra("DeviceId");
 
-        // 添加左组图片资源ID
-        leftImages.add(BitmapFactory.decodeResource(getResources(), R.drawable.peizhun_1));
-        leftImages.add(BitmapFactory.decodeResource(getResources(), R.drawable.peizhun_2));
-        leftImages.add(BitmapFactory.decodeResource(getResources(), R.drawable.peizhun_6));
-
-        // 添加右组图片资源ID
-        rightImages.add(BitmapFactory.decodeResource(getResources(), R.drawable.all_1_11));
-        rightImages.add(BitmapFactory.decodeResource(getResources(), R.drawable.all_2_11));
-        rightImages.add(BitmapFactory.decodeResource(getResources(), R.drawable.all_6_10));
-
-        leftImageNames.add("peizhun_1");
-        leftImageNames.add("peizhun_2");
-        leftImageNames.add("peizhun_6");
-
-        rightImageNames.add("all_1_11");
-        rightImageNames.add("all_2_11");
-        rightImageNames.add("all_6_10");
+        loadImagesFromDevice();
 
         // 处理图片分组和显示
         processAndDisplayImages();
@@ -72,7 +60,7 @@ public class DeviceCheckActivity extends AppCompatActivity {
         Map<Integer, Bitmap> rightMap = new HashMap<>();
         Map<Integer, String> statusMap = new HashMap<>();
 
-        // 处理左侧图片（peizhun）
+        // 处理左侧图片（jizhun）
         for (int i = 0; i < leftImages.size(); i++) {
             String[] parts = leftImageNames.get(i).split("[_.]");
             if (parts.length >= 2) {
@@ -243,6 +231,32 @@ public class DeviceCheckActivity extends AppCompatActivity {
             loose = "正常";
         }
         return String.format("零件状态:\n%s\n%s", loose, fallOff);
+    }
+
+    private ArrayList<String> loadImagesFromDevice() {
+        ArrayList<String> photoList = new ArrayList<>();
+        String deviceFolderName = "Device_" + deviceId; // 使用设备ID命名文件夹
+        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
+
+        if (storageDir.exists()) {
+            File[] files = storageDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().startsWith("jizhun_")) {
+                        leftImages.add(BitmapFactory.decodeFile(file.getAbsolutePath()));
+                        File fileN = new File(file.getAbsolutePath());
+                        String fileName = fileN.getName(); // 获取文件名
+                        leftImageNames.add(fileName);
+                    }else if(file.isFile() && file.getName().startsWith("all_")){
+                        rightImages.add(BitmapFactory.decodeFile(file.getAbsolutePath()));
+                        File fileN = new File(file.getAbsolutePath());
+                        String fileName = fileN.getName(); // 获取文件名
+                        rightImageNames.add(fileName);
+                    }
+                }
+            }
+        }
+        return photoList;
     }
 
     private int dpToPx(int dp) {

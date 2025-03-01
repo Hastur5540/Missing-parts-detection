@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
 //                    }
                     if (isDeviceIdExists(id)) {
                         saveImage();
-                        Toast.makeText(this, "图片以补充！", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "图片已补充！", Toast.LENGTH_SHORT).show();
                         clearInputs();
                     } else {
                         databaseHelper.addDevice(id, photoPath);
@@ -91,10 +91,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "设备信息已保存！", Toast.LENGTH_SHORT).show();
                         clearInputs();
                     }
-                    databaseHelper.addDevice(id, photoPath);
-                    saveImage();
-                    Toast.makeText(this, "设备信息已保存！", Toast.LENGTH_SHORT).show();
-                    clearInputs();
                 }
             }
         });

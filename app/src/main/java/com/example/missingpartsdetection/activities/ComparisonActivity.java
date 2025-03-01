@@ -37,15 +37,8 @@ public class ComparisonActivity extends AppCompatActivity {
     private Device device;
     private static List<Device> deviceList = new ArrayList<>();
     String photoPath_OUT = "";
-    private ArrayList<Bitmap> bitmapsList_IN = new ArrayList<>();
-    private ArrayList<Bitmap> bitmapsList_OUT = new ArrayList<>();
-    Boolean Consistent_flags;
     private RelativeLayout loadingView; // 加载动画视图
     private DatabaseHelper databaseHelper;
-
-    // 得到的的处理后的图片
-    String image1Base64 = null;
-    String image2Base64 = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +99,7 @@ public class ComparisonActivity extends AppCompatActivity {
                 Toast.makeText(this, "请先拍摄照片", Toast.LENGTH_SHORT).show();
             } else {
                 // 显示加载动画
-//                showLoading();
+                showLoading();
                 new Thread(() -> {
                     HttpRequest httpRequest = new HttpRequest("/upload_json");
 
@@ -125,30 +118,7 @@ public class ComparisonActivity extends AppCompatActivity {
                         hideLoading();
                         // 准备跳转到新页面
                         Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
-
-//                        // 添加图片到列表
-//                        ArrayList<String> photoList_IN = loadImagesFromDevice("in");
-//                        ArrayList<String> photoList_OUT = loadImagesFromDevice("out");
-//                        // 添加左组图片资源ID
-//                        photoList_IN.add(String.valueOf(R.drawable.peizhun_1));
-//                        photoList_IN.add(String.valueOf(R.drawable.peizhun_2));
-//                        photoList_IN.add(String.valueOf(R.drawable.peizhun_6));
-//
-//                        // 添加右组图片资源ID
-//                        photoList_OUT.add(String.valueOf(R.drawable.all_1_11));
-//                        photoList_OUT.add(String.valueOf(R.drawable.all_2_11));
-//                        photoList_OUT.add(String.valueOf(R.drawable.all_6_10));
-//
-//                        for (String file : photoList_IN) {
-//                            Bitmap bitmapIn = BitmapFactory.decodeFile(file);
-//                            bitmapsList_IN.add(bitmapIn);
-//                        }
-//                        for (String file : photoList_OUT) {
-//                            Bitmap bitmapOut = BitmapFactory.decodeFile(file);
-//                            bitmapsList_IN.add(bitmapOut);
-//                        }
-//                        intent.putParcelableArrayListExtra("leftImages", bitmapsList_IN); // 发送位图列表
-//                        intent.putParcelableArrayListExtra("rightImages", bitmapsList_OUT);
+                        intent.putExtra("DeviceId", device.getId());
                         startActivity(intent);
                     });
                 }).start();

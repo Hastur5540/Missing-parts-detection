@@ -11,4 +11,7 @@ public final class Constants {
 
     public static String PORT = "5000";
 
+    public static int SAVED_IMG_RESOLUTION_HEIGHT = 1280;
+
+    public static int SAVED_IMG_RESOLUTION_WIDTH = 960;
 }
