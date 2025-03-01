@@ -92,7 +92,8 @@ public class CameraActivity extends AppCompatActivity {
         selectPhotoButton = findViewById(R.id.selectPhotoButton);
         seekBar = findViewById(R.id.seekBar);
         photoCountTextView = findViewById(R.id.photoCountTextView);
-
+        photoCount = getPhotoCount();
+        photoCountTextView.setText("已拍摄: " + photoCount + " 张"); // 更新文本提示
         // 得当前activity的h 和 w
         getScreenHW(this);
         String deviceId = getIntent().getStringExtra("DeviceId");
@@ -246,7 +247,7 @@ public class CameraActivity extends AppCompatActivity {
                 Bitmap bitmap = imageProxyToBitmap(image);
 
                 Bitmap croppedImg = cropImg(bitmap);
-
+//                Bitmap croppedImg = bitmap;
                 executorService.execute(() -> {
                     // 图片保存完成后，通过主线程运行后续逻辑
                     runOnUiThread(() -> {
@@ -377,17 +378,12 @@ public class CameraActivity extends AppCompatActivity {
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {}
             });
-        }else{
-            setContentView(R.layout.activity_camera);
-            cameraPreview = findViewById(R.id.cameraPreview);
-            captureButton = findViewById(R.id.captureButton_1);
-            backButton = findViewById(R.id.backButton);
         }
 
         // 重新启动相机
         startCamera();
         photoCountTextView = findViewById(R.id.photoCountTextView);
-        photoCount++; // 每次捕获成功后，增加照片数量
+        photoCount = photoCount + 1;
         photoCountTextView.setText("已拍摄: " + photoCount + " 张"); // 更新文本提示
         // 设置按钮点击事件
         captureButton.setOnClickListener(v1 -> capturePhoto());
@@ -432,6 +428,23 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    private int getPhotoCount() {
+        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Device_temp");
+        if (storageDir.exists() && storageDir.isDirectory()) {
+            File[] files = storageDir.listFiles();
+            int count = 0;
+            if (files != null) {
+                for (File file : files) {
+                    // 检查文件扩展名是否为图片格式
+                    if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+        return 0; // 如果文件夹不存在，则返回0
+    }
 
     public byte[] bitmapToByteArray(Bitmap bitmap) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
