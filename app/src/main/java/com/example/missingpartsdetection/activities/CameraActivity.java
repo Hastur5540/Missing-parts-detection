@@ -392,39 +392,49 @@ public class CameraActivity extends AppCompatActivity {
 
     private void saveImage(byte[] data, String inOutFlag) {
         // 获取设备ID
-        String deviceFolderName = "";
-        if ("out".equals(inOutFlag)){
-            deviceFolderName = "Device_"+d_id;
-        }else{
-            deviceFolderName = "Device_temp"; // 暂时存储图片
+        String deviceFolderName = "Device_temp"; // 默认临时存储
+        if ("out".equals(inOutFlag)) {
+            deviceFolderName = "Device_" + d_id;
         }
         File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
 
-        // 创建文件夹，如果不存在则创建
+        // 创建文件夹
         if (!storageDir.exists() && !storageDir.mkdirs()) {
             return;
         }
 
-        // 创建图片文件名
+        // 获取传递的 inOutFlag 并拼接文件名
         inOutFlag = getIntent().getStringExtra("inOutFlag") + "_";
-        String fileName = inOutFlag + d_id + "_" + System.currentTimeMillis() + ".jpg"; // 以时间戳确保文件名唯一
+        String fileName = inOutFlag + d_id + "_" + System.currentTimeMillis() + ".jpg";
         File imageFile = new File(storageDir, fileName);
         photoPath = imageFile.getAbsolutePath();
 
-        // 解码图像数据以获取宽高
-        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-        if (bitmap != null) {
-            int width = bitmap.getWidth();
-            int height = bitmap.getHeight();
-            // 输出图像尺寸到日志
-            Log.d("CameraActivity", "Image saved: Width = " + width + ", Height = " + height);
-        }
+        // 解码原始图像数据
+        Bitmap originalBitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+        if (originalBitmap != null) {
+            int width = originalBitmap.getWidth();
+            int height = originalBitmap.getHeight();
+            Log.d("CameraActivity", "Original Image: Width = " + width + ", Height = " + height);
 
-        // 写入图片文件
-        try (FileOutputStream fos = new FileOutputStream(imageFile)) {
-            fos.write(data);
-        } catch (IOException e) {
-            e.printStackTrace();
+            // 计算缩小后的尺寸（等比例缩小2倍）
+            int newWidth = width / 2;
+            int newHeight = height / 2;
+
+            // 创建缩小的 Bitmap
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true);
+
+            // 保存缩小后的图片
+            try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos); // 90% 质量压缩
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // 释放 Bitmap 资源
+            originalBitmap.recycle();
+            scaledBitmap.recycle();
+
+            Log.d("CameraActivity", "Scaled Image Saved: Width = " + newWidth + ", Height = " + newHeight);
         }
     }
 

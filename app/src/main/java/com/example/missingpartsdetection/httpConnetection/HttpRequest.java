@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -41,67 +43,100 @@ public class HttpRequest {
     }
 
 
-    public String getCompareResult(ArrayList<String> photosPath, String modelPath) throws IOException, JSONException {
-//        System.out.println(this.url);
+    public String getCompareResult(Pair<ArrayList<String>, ArrayList<String>> modelsAndPhotosPath, String haha) throws IOException, JSONException {
         JSONObject jsonObject = new JSONObject();
         JSONArray photosArray = new JSONArray();
-        for (String photoPath:photosPath){
+        JSONArray modelsArray = new JSONArray();
+
+        List<String> modelsPath = modelsAndPhotosPath.first;
+        List<String> photosPath = modelsAndPhotosPath.second;
+
+        for (String photoPath : photosPath) {
             String base64Image = encodeImageToBase64(photoPath);
             photosArray.put(base64Image);
         }
+        for (String modelPath: modelsPath
+             ) {
+            String base64Image = encodeImageToBase64(modelPath);
+            modelsArray.put(base64Image);
+        }
+
         jsonObject.put("photos", photosArray);
-        // 设置连接
-        InputStream inputStream = null;
+        jsonObject.put("model", modelsArray);
+
+        HttpURLConnection httpConn = null;
         String jsonResponse = null;
 
+        String errorMess = "";
+        try {
+            // 创建 URL 并打开连接
+            URL urlObj = new URL(this.url);
+            httpConn = (HttpURLConnection) urlObj.openConnection();
+            httpConn.setDoOutput(true);
+            httpConn.setRequestMethod("POST");
+            httpConn.setRequestProperty("Content-Type", "application/json");
+            httpConn.setConnectTimeout(5000); // 5秒连接超时
+            httpConn.setReadTimeout(10000); // 10秒读取超时
 
-        // 创建 URL 并打开连
-        URL urlObj = new URL(this.url);
-        HttpURLConnection httpConn = (HttpURLConnection) urlObj.openConnection();
-//            httpConn.setUseCaches(false);
-        httpConn.setDoOutput(true);
-//            httpConn.setDoInput(true);
-        httpConn.setRequestMethod("POST");
-        httpConn.setRequestProperty("Content-Type", "application/json");  // 设置请求头，告诉服务器这是 JSON 数据
-
-        // 写入 JSON 数据到请求体
-        OutputStream outputStream = httpConn.getOutputStream();
-        outputStream.write(jsonObject.toString().getBytes());
-        outputStream.flush();
-
-        // 获取服务器响应
-        StringBuilder response = new StringBuilder();
-        inputStream = httpConn.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
-        }
-
-        jsonResponse = response.toString();
-        ObjectMapper objMapper = new ObjectMapper();
-
-        try{
-            JsonNode jsonNode = objMapper.readTree(jsonResponse);
-            JsonNode processedImagesList = jsonNode.get("shuchu_images");
-            // 遍历这个数组
-            Iterator<JsonNode> elements = processedImagesList.iterator();
-            while (elements.hasNext()) {
-                JsonNode node = elements.next();
-
-                // 获取每个元素中的字段
-                String name = node.get("filename").asText();
-                String imageBase64 = node.get("base64").asText();
-
-                byte[] imageBytes = Base64.getDecoder().decode(imageBase64);
-                this.saveReturnedImage(imageBytes, name, modelPath);
+            // 发送请求
+            try (OutputStream outputStream = httpConn.getOutputStream()) {
+                outputStream.write(jsonObject.toString().getBytes());
+                outputStream.flush();
             }
-        }catch (Exception e) {
-            e.printStackTrace();
+
+            // 获取响应码
+            int responseCode = httpConn.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) { // 200
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    jsonResponse = response.toString();
+                }
+
+                // 解析 JSON 响应
+                ObjectMapper objMapper = new ObjectMapper();
+                try {
+                    JsonNode jsonNode = objMapper.readTree(jsonResponse);
+                    JsonNode processedImagesList = jsonNode.get("shuchu_images");
+                    if (processedImagesList != null) {
+                        for (JsonNode node : processedImagesList) {
+                            String name = node.get("filename").asText();
+                            String imageBase64 = node.get("base64").asText();
+                            byte[] imageBytes = Base64.getDecoder().decode(imageBase64);
+                            this.saveReturnedImage(imageBytes, name, haha);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("JSON 解析错误：" + e.getMessage());
+                }
+
+            } else {
+                // 服务器错误或客户端错误
+                try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(httpConn.getErrorStream()))) {
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = errorReader.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                    System.err.println("HTTP 错误 (" + responseCode + "): " + errorResponse.toString());
+                }
+            }
+        } catch (SocketTimeoutException e) {
+            return "连接超时";
+        } catch (IOException e) {
+            return "网络错误";
+        } finally {
+            if (httpConn != null) {
+                httpConn.disconnect();
+            }
         }
 
-        return jsonResponse;
+        return "处理成功";
     }
+
 
     private String encodeImageToBase64(String imagePath) throws IOException {
         File imageFile = new File(imagePath);

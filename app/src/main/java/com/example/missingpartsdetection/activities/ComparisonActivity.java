@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -105,20 +106,13 @@ public class ComparisonActivity extends AppCompatActivity {
                 Toast.makeText(this, "请先拍摄照片", Toast.LENGTH_SHORT).show();
             } else {
                 // 显示加载动画
-                showLoading();
+//                showLoading();
                 new Thread(() -> {
-                    // 模拟处理延时
-//                    try {
-//                        Thread.sleep(2000);// 实际比较逻辑将放置在这里
-//
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
                     HttpRequest httpRequest = new HttpRequest("/upload_json");
 
-                    ArrayList<String> photoList = loadAllImagesFromDevice();
+                    Pair<ArrayList<String>, ArrayList<String>> modelsAndOutImages = loadImagesFromDevice();
                     try {
-                            String response = httpRequest.getCompareResult(photoList, photoPath_OUT);
+                            String response = httpRequest.getCompareResult(modelsAndOutImages, photoPath_OUT);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (JSONException e) {
@@ -200,8 +194,10 @@ public class ComparisonActivity extends AppCompatActivity {
         return photoList;
     }
 
-    private ArrayList<String> loadAllImagesFromDevice() {
+    private Pair<ArrayList<String>, ArrayList<String>> loadImagesFromDevice() {
         ArrayList<String> photoList = new ArrayList<>();
+        ArrayList<String> modelList = new ArrayList<>();
+
         String deviceFolderName = "Device_" + device.getId(); // 使用设备ID命名文件夹
         File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
 
@@ -209,11 +205,17 @@ public class ComparisonActivity extends AppCompatActivity {
             File[] files = storageDir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    photoList.add(file.getAbsolutePath());
+                    String fileName = file.getName();
+                    String filePath = file.getAbsolutePath();
+                    if(fileName.startsWith("out")){
+                        photoList.add(filePath);
+                    }else{
+                        modelList.add(filePath);
+                    }
                 }
             }
         }
-        return photoList;
+        return new Pair<>(modelList, photoList);
     }
 
     private void showLoading() {
