@@ -26,6 +26,7 @@
         android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".activities.MainActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,7 +35,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".activities.DeveloperPageActivity" />
-        <activity android:name=".activities.CameraActivity" />
+        <activity android:name=".activities.CameraActivity"
+            android:configChanges="orientation|screenSize"/>
         <activity android:name=".activities.Camera_AlbumActivity" />
         <activity android:name=".activities.DeviceCheckActivity"/>
         <activity android:name=".activities.ComparisonActivity" />

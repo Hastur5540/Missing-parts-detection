@@ -72,16 +72,29 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "请先拍摄照片", Toast.LENGTH_SHORT).show();
                 } else {
                     String id = idInput.getText().toString();
-
                     // 检查工号是否已存在
+//                    if (isDeviceIdExists(id)) {
+//                        Toast.makeText(this, "设备号 " + id + " 已存在", Toast.LENGTH_SHORT).show();
+//                    } else {
+//                        databaseHelper.addDevice(id, photoPath);
+//                        saveImage();
+//                        Toast.makeText(this, "设备信息已保存！", Toast.LENGTH_SHORT).show();
+//                        clearInputs();
+//                    }
                     if (isDeviceIdExists(id)) {
-                        Toast.makeText(this, "设备号 " + id + " 已存在", Toast.LENGTH_SHORT).show();
+                        saveImage();
+                        Toast.makeText(this, "图片以补充！", Toast.LENGTH_SHORT).show();
+                        clearInputs();
                     } else {
                         databaseHelper.addDevice(id, photoPath);
                         saveImage();
                         Toast.makeText(this, "设备信息已保存！", Toast.LENGTH_SHORT).show();
                         clearInputs();
                     }
+                    databaseHelper.addDevice(id, photoPath);
+                    saveImage();
+                    Toast.makeText(this, "设备信息已保存！", Toast.LENGTH_SHORT).show();
+                    clearInputs();
                 }
             }
         });

@@ -78,12 +78,12 @@ public class CameraActivity extends AppCompatActivity {
 
     private int photoCount = 0; // Photo count
     private TextView photoCountTextView; // Reference for the TextView
+    private  String inOutFlag = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-
         cameraPreview = findViewById(R.id.cameraPreview);
 //        captureFrame = findViewById(R.id.captureFrame);
         captureButton = findViewById(R.id.captureButton_1);
@@ -92,14 +92,18 @@ public class CameraActivity extends AppCompatActivity {
         selectPhotoButton = findViewById(R.id.selectPhotoButton);
         seekBar = findViewById(R.id.seekBar);
         photoCountTextView = findViewById(R.id.photoCountTextView);
-        photoCount = getPhotoCount();
-        photoCountTextView.setText("已拍摄: " + photoCount + " 张"); // 更新文本提示
-        // 得当前activity的h 和 w
-        getScreenHW(this);
         String deviceId = getIntent().getStringExtra("DeviceId");
         if (deviceId != null) {
             d_id = deviceId;
         }
+
+        inOutFlag = getIntent().getStringExtra("inOutFlag");
+        photoCount = getPhotoCount();
+        photoCountTextView.setText("已拍摄: " + photoCount + " 张"); // 更新文本提示
+
+        // 得当前activity的h 和 w
+        getScreenHW(this);
+
 
 
         // 查看当前摄像头权限并获取
@@ -125,7 +129,7 @@ public class CameraActivity extends AppCompatActivity {
         });
 
         // Check "inOutFlag" and show button/seekBar for "out"
-        String inOutFlag = getIntent().getStringExtra("inOutFlag");
+
         if ("out".equals(inOutFlag)) {
             selectPhotoButton.setVisibility(View.VISIBLE);
             seekBar.setVisibility(View.VISIBLE);
@@ -439,19 +443,36 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private int getPhotoCount() {
-        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Device_temp");
-        if (storageDir.exists() && storageDir.isDirectory()) {
-            File[] files = storageDir.listFiles();
-            int count = 0;
-            if (files != null) {
-                for (File file : files) {
-                    // 检查文件扩展名是否为图片格式
-                    if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
-                        count++;
+        if(inOutFlag.equals("in")){
+            File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Device_temp");
+            if (storageDir.exists() && storageDir.isDirectory()) {
+                File[] files = storageDir.listFiles();
+                int count = 0;
+                if (files != null) {
+                    for (File file : files) {
+                        // 检查文件扩展名是否为图片格式
+                        if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
+                            count++;
+                        }
                     }
                 }
+                return count;
             }
-            return count;
+        }else{
+            File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Device_"+d_id);
+            if (storageDir.exists() && storageDir.isDirectory()) {
+                File[] files = storageDir.listFiles();
+                int count = 0;
+                if (files != null) {
+                    for (File file : files) {
+                        // 检查文件扩展名是否为图片格式
+                        if (file.isFile() && (file.getName().startsWith("out"))) {
+                            count++;
+                        }
+                    }
+                }
+                return count;
+            }
         }
         return 0; // 如果文件夹不存在，则返回0
     }
