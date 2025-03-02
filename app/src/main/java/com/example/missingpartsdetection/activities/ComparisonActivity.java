@@ -118,6 +118,7 @@ public class ComparisonActivity extends AppCompatActivity {
                             hideLoading();
                             // 准备跳转到新页面
                             Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
+                            intent.putExtra("DeviceId", device.getId());
                             startActivity(intent);
                         });
                     }else{
