@@ -1,4 +1,5 @@
 package com.example.missingpartsdetection.activities;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -30,14 +31,17 @@ public class AlbumActivity extends AppCompatActivity {
     private ArrayList<String> photoList; // 使用字符串列表保存图片路径
     private boolean isEditing = false;
     private Button backButton;
+    private Button editButton;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_camera_album);
+        setContentView(R.layout.activity_album);
 
         recyclerView = findViewById(R.id.recyclerView);
         backButton = findViewById(R.id.backButton);
+        editButton = findViewById(R.id.editButton);
         photoList = new ArrayList<>();
 
         // 从 Intent 获取设备 ID
@@ -53,7 +57,10 @@ public class AlbumActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         photoAdapter = new PhotoAdapter(this, photoList);
         recyclerView.setAdapter(photoAdapter);
-
+        editButton.setOnClickListener(v -> {
+            isEditing = !isEditing; // 切换编辑模式
+            photoAdapter.setEditing(isEditing);
+        });
         // 返回按钮点击事件
         backButton.setOnClickListener(v -> finish());
     }

@@ -54,7 +54,7 @@ public class ComparisonActivity extends AppCompatActivity {
         deviceList = (List<Device>) getIntent().getSerializableExtra("deviceList");
         backButton = findViewById(R.id.backButton);
         databaseHelper = new DatabaseHelper(this);
-
+        deletePics();
         //返回按钮
         backButton.setOnClickListener(v -> {
             finish();
@@ -104,7 +104,6 @@ public class ComparisonActivity extends AppCompatActivity {
                     HttpRequest httpRequest = new HttpRequest("/upload_json");
                     String response = "";
                     Pair<ArrayList<String>, ArrayList<String>> modelsAndOutImages = loadImagesFromDevice();
-                    deletePics();
                     try {
                             response = httpRequest.getCompareResult(modelsAndOutImages, photoPath_OUT);
                     } catch (IOException e) {
@@ -168,26 +167,6 @@ public class ComparisonActivity extends AppCompatActivity {
             }
         }
         return deviceFolderName;
-    }
-
-    private ArrayList<String> loadImagesFromDevice(String inOutFlag) {
-        ArrayList<String> photoList = new ArrayList<>();
-        String deviceFolderName = "Device_" + device.getId(); // 使用设备ID命名文件夹
-        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
-
-        if (storageDir.exists()) {
-            File[] files = storageDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    inOutFlag = inOutFlag + "_";
-                    String fileName = inOutFlag + device.getId();
-                    if (file.isFile() && file.getName().startsWith(fileName)) {
-                        photoList.add(file.getAbsolutePath());
-                    }
-                }
-            }
-        }
-        return photoList;
     }
 
     private Pair<ArrayList<String>, ArrayList<String>> loadImagesFromDevice() {
