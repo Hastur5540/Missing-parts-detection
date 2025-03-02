@@ -5,9 +5,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -18,7 +20,7 @@ import android.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.missingpartsdetection.R;
-import com.example.missingpartsdetection.entity.Device;
+import com.example.missingpartsdetection.utils.ZoomableImageView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -185,15 +187,35 @@ public class DeviceCheckActivity extends AppCompatActivity {
 
     private void showEnlargedImage(Bitmap bitmap) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        ImageView imageView = new ImageView(this);
+
+        // 创建自定义视图
+        ZoomableImageView imageView = new ZoomableImageView(this);
         imageView.setImageBitmap(bitmap);
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
         // 设置对话框属性
-        builder.setView(imageView)
-                .setPositiveButton("关闭", (dialog, which) -> dialog.dismiss())
-                .create()
-                .show();
+        AlertDialog dialog = builder.setView(imageView)
+                .setPositiveButton("关闭", (d, which) -> d.dismiss())
+                .create();
+
+        // 调整对话框尺寸
+        dialog.setOnShowListener(d -> {
+            Window window = dialog.getWindow();
+            if (window != null) {
+                DisplayMetrics metrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+                // 设置对话框为屏幕宽高的90%
+                int width = (int) (metrics.widthPixels * 0.9);
+                int height = (int) (metrics.heightPixels * 0.9);
+                window.setLayout(width, height);
+
+                // 设置背景圆角（可选）
+                window.setBackgroundDrawableResource(R.drawable.dialog_rounded_bg);
+            }
+        });
+
+        dialog.show();
     }
 
     private ImageView createImageView(Bitmap bitmap, float weight) {

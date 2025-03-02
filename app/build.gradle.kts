@@ -42,6 +42,8 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.camera.view)
     implementation(libs.camera.lifecycle)
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -67,4 +69,5 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core:2.12.3")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.12.3")
     implementation("com.github.bumptech.glide:glide:4.12.0")
+
 }

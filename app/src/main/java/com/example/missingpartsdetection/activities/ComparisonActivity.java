@@ -115,6 +115,7 @@ public class ComparisonActivity extends AppCompatActivity {
                     if(response.equals("success")){
                         // 处理结束后，更新UI
                         runOnUiThread(() -> {
+                            deletePics();
                             hideLoading();
                             // 准备跳转到新页面
                             Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
@@ -127,6 +128,27 @@ public class ComparisonActivity extends AppCompatActivity {
                 }).start();
             }
         });
+    }
+
+    private void deletePics() {
+        String deviceFolderName = "Device_" + device.getId(); // 使用设备ID命名文件夹
+        File storageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), deviceFolderName);
+        if (storageDir.exists()) {
+            File[] files = storageDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && (file.getName().startsWith("jizhun_")||file.getName().startsWith("all_"))) {
+                        if (file.delete()) {
+                            // 成功删除文件
+                            System.out.println("Deleted: " + file.getName());
+                        } else {
+                            // 删除失败
+                            System.out.println("Failed to delete: " + file.getName());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private String loadFirstImagesFromDevice(String inOutFlag) {
