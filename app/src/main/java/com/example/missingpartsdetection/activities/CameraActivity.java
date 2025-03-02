@@ -89,6 +89,7 @@ public class CameraActivity extends AppCompatActivity {
         getScreenHW(this);
         super.onConfigurationChanged(newConfig);
         startCamera();
+        overlayImageView.setVisibility(View.GONE);
     }
 
 
@@ -338,13 +339,6 @@ public class CameraActivity extends AppCompatActivity {
         int rotationDegrees = getWindowManager().getDefaultDisplay().getRotation();
         int oriWidth = oriImg.getWidth();
         int oriHeight = oriImg.getHeight();
-//        if(rotationDegrees%2==1){
-//            oriWidth = oriImg.getHeight();
-//            oriHeight = oriImg.getWidth();
-//        }else{
-//            oriWidth = oriImg.getWidth();
-//            oriHeight = oriImg.getHeight();
-//        }
         float widthRatio = (float)cameraPreviewWidth / oriWidth;
         float heightRatio= (float)cameraPreviewHeight/ oriHeight;
 
