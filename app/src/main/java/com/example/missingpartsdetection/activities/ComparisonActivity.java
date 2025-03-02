@@ -102,25 +102,27 @@ public class ComparisonActivity extends AppCompatActivity {
                 showLoading();
                 new Thread(() -> {
                     HttpRequest httpRequest = new HttpRequest("/upload_json");
-
+                    String response = "";
                     Pair<ArrayList<String>, ArrayList<String>> modelsAndOutImages = loadImagesFromDevice();
                     try {
-                            String response = httpRequest.getCompareResult(modelsAndOutImages, photoPath_OUT);
+                            response = httpRequest.getCompareResult(modelsAndOutImages, photoPath_OUT);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (JSONException e) {
                         throw new RuntimeException(e);
                     }
 
-
-                    // 处理结束后，更新UI
-                    runOnUiThread(() -> {
+                    if(response.equals("success")){
+                        // 处理结束后，更新UI
+                        runOnUiThread(() -> {
+                            hideLoading();
+                            // 准备跳转到新页面
+                            Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
+                            startActivity(intent);
+                        });
+                    }else{
                         hideLoading();
-                        // 准备跳转到新页面
-                        Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
-                        intent.putExtra("DeviceId", device.getId());
-                        startActivity(intent);
-                    });
+                    }
                 }).start();
             }
         });

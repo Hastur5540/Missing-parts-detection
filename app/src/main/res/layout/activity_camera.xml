@@ -27,8 +27,6 @@
         android:id="@+id/overlayImageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="fitCenter"
-        android:layout_alignParentTop="true"
         android:alpha="0.5" />
 
     <!-- Button to select photo -->

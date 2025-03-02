@@ -108,6 +108,7 @@ public class HttpRequest {
                             this.saveReturnedImage(imageBytes, name, haha);
                         }
                     }
+                    return "success";
                 } catch (Exception e) {
                     System.err.println("JSON 解析错误：" + e.getMessage());
                 }

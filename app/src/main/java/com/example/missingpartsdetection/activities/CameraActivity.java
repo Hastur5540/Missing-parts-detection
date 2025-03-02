@@ -1,5 +1,6 @@
 package com.example.missingpartsdetection.activities;
 
+import static com.example.missingpartsdetection.utils.Constants.*;
 import static java.lang.Math.max;
 
 import android.Manifest;
@@ -15,6 +16,7 @@ import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -44,6 +46,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,7 +70,7 @@ public class CameraActivity extends AppCompatActivity {
 //    private View captureFrame;
     private HashMap<String, Integer> screenHW = new HashMap<>();
 
-    private final float CAMERA_PREVIEW_HW_RATIO = (float) SAVED_IMG_RESOLUTION_HEIGHT /SAVED_IMG_RESOLUTION_WIDTH;
+    private final float CAMERA_PREVIEW_HW_RATIO = (float)SAVED_IMG_RESOLUTION_HEIGHT/SAVED_IMG_RESOLUTION_WIDTH;
     private int cameraPreviewHeight;
     private int cameraPreviewWidth;
 
@@ -79,12 +82,15 @@ public class CameraActivity extends AppCompatActivity {
     private TextView photoCountTextView; // Reference for the TextView
     private  String inOutFlag = "";
 
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
+        // 得当前activity的h 和 w
+        getScreenHW(this);
         super.onConfigurationChanged(newConfig);
-        // 重新启动相机
         startCamera();
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,9 +113,7 @@ public class CameraActivity extends AppCompatActivity {
         photoCount = getPhotoCount();
         photoCountTextView.setText("已拍摄: " + photoCount + " 张"); // 更新文本提示
 
-
-
-
+        getScreenHW(this);
         // 查看当前摄像头权限并获取
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 101);
@@ -178,11 +182,28 @@ public class CameraActivity extends AppCompatActivity {
             if (selectedImagePath != null) {
                 // 根据路径读取图片并设置到 overlayImageView
                 Bitmap bitmap = BitmapFactory.decodeFile(selectedImagePath);
-                overlayImageView.setImageBitmap(bitmap);
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, cameraPreviewWidth, cameraPreviewHeight, true);
+
+                // 获取 cameraPreview 的位置和尺寸
+                int left = cameraPreview.getLeft();
+                int top = cameraPreview.getTop();
+
+                // 设置 overlayImageView 的布局参数
+                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) overlayImageView.getLayoutParams();
+                params.width = cameraPreviewWidth;
+                params.height = cameraPreviewHeight;
+                params.leftMargin = left;  // 对齐左边
+                params.topMargin = top;    // 对齐顶部
+
+                overlayImageView.setLayoutParams(params);
+                overlayImageView.requestLayout();
+
+                overlayImageView.setImageBitmap(scaledBitmap);
 
                 // 确保 overlayImageView 显示
                 overlayImageView.setVisibility(View.VISIBLE);
             }
+
         }
     }
 
@@ -197,12 +218,20 @@ public class CameraActivity extends AppCompatActivity {
 
             cameraPreviewWidth = params.width;
             cameraPreviewHeight = params.height;
+
         }else{
-            params.height = width;
+            // 此时获取action_Bar的height
+            int actionBarHeight = -1;
+            TypedValue tv = new TypedValue();
+            if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+            }
+
+            params.height = width - actionBarHeight;
             params.width = Math.min((int)(params.height*hwRatio), height_limit);
 
-            cameraPreviewHeight = params.width;
-            cameraPreviewWidth = params.height;
+            cameraPreviewHeight = params.height;
+            cameraPreviewWidth = params.width;
         }
         view.setLayoutParams(params);
         view.requestLayout();
@@ -245,8 +274,6 @@ public class CameraActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-
-
     private void capturePhoto() {
         if (capturedImg == null) {
             return;
@@ -262,7 +289,6 @@ public class CameraActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         returnToCameraScreen();
                     });
-
                     Bitmap croppedImg = cropImg(bitmap);
                     String inOutFlag = getIntent().getStringExtra("inOutFlag");
                     saveImage(bitmapToByteArray(croppedImg), inOutFlag);
@@ -294,70 +320,62 @@ public class CameraActivity extends AppCompatActivity {
 //        return rotateBitmap(bitmap, rotationDegrees);
     }
 
+
+    // 旋转
+    private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
+        if (rotationDegrees == 0) {
+            return bitmap;
+        }
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotationDegrees);
+
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
     public Bitmap cropImg(Bitmap oriImg) {
+        // 获取原始图片的宽度和高度
         int rotationDegrees = getWindowManager().getDefaultDisplay().getRotation();
+        int oriWidth = oriImg.getWidth();
+        int oriHeight = oriImg.getHeight();
+//        if(rotationDegrees%2==1){
+//            oriWidth = oriImg.getHeight();
+//            oriHeight = oriImg.getWidth();
+//        }else{
+//            oriWidth = oriImg.getWidth();
+//            oriHeight = oriImg.getHeight();
+//        }
+        float widthRatio = (float)cameraPreviewWidth / oriWidth;
+        float heightRatio= (float)cameraPreviewHeight/ oriHeight;
 
-        if(rotationDegrees % 2 == 0) {
-            // 获取原始图片的宽度和高度
-            int oriWidth = oriImg.getWidth();
-            int oriHeight = oriImg.getHeight();
+        float ratio = max(widthRatio, heightRatio);
+        Float realWidth = cameraPreviewWidth / ratio;
+        Float realHeight = cameraPreviewHeight / ratio;
 
-            float widthRatio = (float) cameraPreviewWidth / oriWidth;
-            float heightRatio = (float) cameraPreviewHeight / oriHeight;
+        int ww = realWidth.intValue();
+        int hh = realHeight.intValue();
 
-            float ratio = max(widthRatio, heightRatio);
-            Float realWidth = cameraPreviewWidth / ratio;
-            Float realHeight = cameraPreviewHeight / ratio;
+        // 计算裁剪区域的起始坐标，确保不会超出图片边界
+        int startX = max(0, (oriWidth - ww) / 2);
+        int startY = max(0, (oriHeight - hh) / 2);
 
-            int ww = realWidth.intValue();
-            int hh = realHeight.intValue();
+        // 确保裁剪区域在图片范围内
+        startX = Math.min(startX, startX + ww);
+        startY = Math.min(startY, startY + hh);
 
-            // 计算裁剪区域的起始坐标，确保不会超出图片边界
-            int startX = max(0, (oriWidth - ww) / 2);
-            int startY = max(0, (oriHeight - hh) / 2);
-
-            // 确保裁剪区域在图片范围内
-            startX = Math.min(startX, startX + ww);
-            startY = Math.min(startY, startY + hh);
-
-            // 使用 createBitmap 方法裁剪图像
+        // 使用 createBitmap 方法裁剪图像
+        if(rotationDegrees % 2 == 1){
             return Bitmap.createBitmap(oriImg, startX, startY, ww, hh);
-        }else{
-            // 获取原始图片的宽度和高度
-            int oriWidth = oriImg.getWidth();
-            int oriHeight = oriImg.getHeight();
-
-            float widthRatio = (float) cameraPreviewHeight / oriWidth;
-            float heightRatio = (float) cameraPreviewWidth / oriHeight;
-
-            float ratio = max(widthRatio, heightRatio);
-            Float realWidth = cameraPreviewHeight / ratio;
-            Float realHeight = cameraPreviewWidth / ratio;
-
-            int ww = realWidth.intValue();
-            int hh = realHeight.intValue();
-
-            // 计算裁剪区域的起始坐标，确保不会超出图片边界
-            int startX = max(0, (oriWidth - ww) / 2);
-            int startY = max(0, (oriHeight - hh) / 2);
-
-            // 确保裁剪区域在图片范围内
-            startX = Math.min(startX, startX + ww);
-            startY = Math.min(startY, startY + hh);
-
-            // 使用 createBitmap 方法裁剪图像
+        }else {
             return Bitmap.createBitmap(oriImg, startX, startY, ww, hh);
         }
     }
 
     // 获取屏幕宽高（pixel）
     public void getScreenHW(Context context) {
-        // 屏幕的hw随着旋转方向变化
-
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         screenHW.put("height", displayMetrics.heightPixels);
         screenHW.put("width", displayMetrics.widthPixels);
-
     }
 
     private void returnToCameraScreen() {
@@ -421,15 +439,15 @@ public class CameraActivity extends AppCompatActivity {
             Log.d("CameraActivity", "Original Image: Width = " + width + ", Height = " + height);
 
             // 计算缩小后的尺寸（等比例缩小2倍）
-            int newWidth = width / 2;
-            int newHeight = height / 2;
+            int newWidth = width / 4;
+            int newHeight = height / 4;
 
             // 创建缩小的 Bitmap
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true);
 
             // 保存缩小后的图片
             try (FileOutputStream fos = new FileOutputStream(imageFile)) {
-                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos); // 90% 质量压缩
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos); // 90% 质量压缩
             } catch (IOException e) {
                 e.printStackTrace();
             }
