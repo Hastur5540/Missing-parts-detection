@@ -20,6 +20,7 @@ import java.util.ArrayList;
 
 import com.bumptech.glide.Glide;
 import com.example.missingpartsdetection.R;
+import androidx.recyclerview.widget.GridLayoutManager;
 
 public class AlbumActivity extends AppCompatActivity {
 
@@ -33,30 +34,27 @@ public class AlbumActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_album);
+        setContentView(R.layout.activity_camera_album);
 
         recyclerView = findViewById(R.id.recyclerView);
-        Button editButton = findViewById(R.id.editButton);
         backButton = findViewById(R.id.backButton);
         photoList = new ArrayList<>();
 
+        // 从 Intent 获取设备 ID
         String deviceId = getIntent().getStringExtra("DeviceId");
         if (deviceId != null) {
             d_id = deviceId;
         }
 
-        // 读取保存在同一设备文件夹中的所有图片
+        // 读取保存在设备文件夹中的所有图片
         loadImagesFromDevice();
 
+        // 使用 GridLayoutManager 设置列数为 2
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         photoAdapter = new PhotoAdapter(this, photoList);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(photoAdapter);
 
-        editButton.setOnClickListener(v -> {
-            isEditing = !isEditing; // 切换编辑模式
-            photoAdapter.setEditing(isEditing);
-        });
-
+        // 返回按钮点击事件
         backButton.setOnClickListener(v -> finish());
     }
 
@@ -107,7 +105,10 @@ public class AlbumActivity extends AppCompatActivity {
             String imagePath = photos.get(position);
             Log.d("PhotoAdapter", "Loading image: " + imagePath);
             // 使用 Glide 加载图片
-            Glide.with(context).load(imagePath).into(holder.photoImageView);
+            Glide.with(context)
+                    .load(imagePath)
+                    .fitCenter() // 添加等比缩放
+                    .into(holder.photoImageView);
             holder.photoImageView.setOnClickListener(v -> showZoomedImage(imagePath));
             holder.deleteButton.setVisibility(isEditing ? View.VISIBLE : View.GONE);
 

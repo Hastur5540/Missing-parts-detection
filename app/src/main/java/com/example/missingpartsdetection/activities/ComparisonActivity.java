@@ -104,6 +104,7 @@ public class ComparisonActivity extends AppCompatActivity {
                     HttpRequest httpRequest = new HttpRequest("/upload_json");
                     String response = "";
                     Pair<ArrayList<String>, ArrayList<String>> modelsAndOutImages = loadImagesFromDevice();
+                    deletePics();
                     try {
                             response = httpRequest.getCompareResult(modelsAndOutImages, photoPath_OUT);
                     } catch (IOException e) {
@@ -115,7 +116,7 @@ public class ComparisonActivity extends AppCompatActivity {
                     if(response.equals("success")){
                         // 处理结束后，更新UI
                         runOnUiThread(() -> {
-                            deletePics();
+
                             hideLoading();
                             // 准备跳转到新页面
                             Intent intent = new Intent(ComparisonActivity.this, DeviceCheckActivity.class);
@@ -123,7 +124,7 @@ public class ComparisonActivity extends AppCompatActivity {
                             startActivity(intent);
                         });
                     }else{
-                        hideLoading();
+                        Toast.makeText(this, "结果返回失败！", Toast.LENGTH_SHORT).show();
                     }
                 }).start();
             }

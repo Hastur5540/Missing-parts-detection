@@ -38,11 +38,13 @@
         <activity android:name=".activities.CameraActivity"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-        <activity android:name=".activities.Camera_AlbumActivity" />
+        <activity android:name=".activities.Camera_AlbumActivity"
+            android:configChanges="orientation|screenSize"/>
         <activity android:name=".activities.DeviceCheckActivity"/>
         <activity android:name=".activities.ComparisonActivity" />
         <activity android:name=".activities.DeviceListActivity" />
-        <activity android:name=".activities.AlbumActivity" />
+        <activity android:name=".activities.AlbumActivity"
+            android:configChanges="orientation|screenSize"/>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.missingpartsdetection.fileprovider"

@@ -20,6 +20,7 @@ import com.example.missingpartsdetection.R;
 
 import java.io.File;
 import java.util.ArrayList;
+import androidx.recyclerview.widget.GridLayoutManager;
 
 public class Camera_AlbumActivity extends AppCompatActivity {
 
@@ -47,9 +48,9 @@ public class Camera_AlbumActivity extends AppCompatActivity {
         // 读取保存在设备文件夹中的所有图片
         loadImagesFromDevice();
 
-        // 设置 RecyclerView 和适配器
+        // 使用 GridLayoutManager 设置列数为 2
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         photoAdapter = new PhotoAdapter(this, photoList);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(photoAdapter);
 
         // 返回按钮点击事件
@@ -102,7 +103,10 @@ public class Camera_AlbumActivity extends AppCompatActivity {
             Log.d("PhotoAdapter", "Loading image: " + imagePath);
 
             // 使用 Glide 加载图片
-            Glide.with(context).load(imagePath).into(holder.photoImageView);
+            Glide.with(context)
+                    .load(imagePath)
+                    .fitCenter() // 添加等比缩放
+                    .into(holder.photoImageView);
 
             // 配置点击事件，返回图片路径
             holder.photoImageView.setOnClickListener(v -> {

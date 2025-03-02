@@ -16,6 +16,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/backButton"
-        android:layout_marginTop="8dp" />
+        android:padding="4dp"
+        android:clipToPadding="false"
+        android:layout_marginTop="8dp"/>
 
 </RelativeLayout>
