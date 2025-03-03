@@ -1,16 +1,23 @@
 package com.example.missingpartsdetection.activities;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.missingpartsdetection.R;
@@ -29,6 +36,7 @@ public class DeviceListActivity extends AppCompatActivity {
     private DatabaseHelper databaseHelper;
     private ListView deviceListView;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,7 +49,25 @@ public class DeviceListActivity extends AppCompatActivity {
 
         databaseHelper = new DatabaseHelper(this);
         deviceList = databaseHelper.getAlldevices();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, deviceList);
+        adapter = new ArrayAdapter<Device>(this, R.layout.list_item, R.id.text_item, deviceList) {
+            @NonNull
+            @Override
+            public View getView(int position, @NonNull View convertView, @NonNull ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = view.findViewById(R.id.text_item);
+                Button deleteButton = view.findViewById(R.id.deleteButton_1);
+
+                // 设置设备信息显示
+                Device device = getItem(position);
+                if (device != null) {
+                    textView.setText("设备号："+device.getId());
+                }
+
+                // 初始化隐藏删除按钮
+                deleteButton.setVisibility(View.INVISIBLE);
+                return view;
+            }
+        };
         deviceListView.setAdapter(adapter);
 
         // 返回按钮点击事件
@@ -58,6 +84,31 @@ public class DeviceListActivity extends AppCompatActivity {
         deviceListView.setOnItemClickListener((parent, view, position, id) -> {
             Device selectedDevice = deviceList.get(position);
             startComparisonActivity(selectedDevice);
+        });
+        // 处理长按事件
+        deviceListView.setOnItemLongClickListener((parent, view, position, id) -> {
+            // 获取列表项中的删除按钮
+            Button deleteButton = view.findViewById(R.id.deleteButton_1);
+
+            // 显示删除按钮
+            deleteButton.setVisibility(View.VISIBLE);
+
+            // 设置删除按钮点击监听
+            deleteButton.setOnClickListener(v -> {
+                deleteDevice(position);
+                deleteButton.setVisibility(View.INVISIBLE);
+            });
+
+            // 处理点击列表其他区域隐藏按钮
+            view.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (event.getX() < deleteButton.getLeft() || event.getX() > deleteButton.getRight()) {
+                        deleteButton.setVisibility(View.INVISIBLE);
+                    }
+                }
+                return false;
+            });
+            return true;
         });
 
         // 搜索框文本变化监听
@@ -94,31 +145,23 @@ public class DeviceListActivity extends AppCompatActivity {
         startActivityForResult(intent,1);
     }
 
-    private void deletePhoto(String photoPath) {
-        File photoFile = new File(photoPath);
-        if (photoFile.exists()) {
-            boolean deleted = photoFile.delete();
-            if (deleted) {
-                Log.d("WorkerList", "Deleted photo: " + photoPath);
+    private void deleteDevice(int position) {
+        Device device = deviceList.get(position);
+        String id = device.getId();
+        File tempDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Device_"+id);
+        File[] tempFiles = tempDir.listFiles();
+        for (File tempFile : tempFiles) {
+            if (tempFile.delete()) {
+                // 成功删除文件
+                Log.d("DeviceList", "Deleted photo: "+ tempFile.getName());
             } else {
-                Log.d("WorkerList", "Failed to delete photo: " + photoPath);
+                // 删除失败
+                Log.d("DeviceList", "Failed to delete: " + tempFile.getName());
             }
         }
-    }
-
-    //移除工人并刷新列表
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1 && resultCode == RESULT_OK) {
-            Device device = (Device) data.getSerializableExtra("worker");
-            if (device != null) {
-                String photoPath = device.getPhotoPath();
-                deletePhoto(photoPath);
-            }
-            databaseHelper.deleteDevice(device.getId());
-            deviceList.remove(device);
-            adapter.notifyDataSetChanged();
-        }
+        databaseHelper.deleteDevice(id); // 从数据库中删除
+        deviceList.remove(position); // 从列表中删除
+        adapter.notifyDataSetChanged(); // 更新适配器
+        Toast.makeText(this, "设备"+id+"已删除", Toast.LENGTH_SHORT).show(); // 提示用户
     }
 }
