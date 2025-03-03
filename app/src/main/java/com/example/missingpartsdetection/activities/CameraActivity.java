@@ -397,7 +397,6 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         // 重新启动相机
-        startCamera();
         photoCountTextView = findViewById(R.id.photoCountTextView);
         photoCount = photoCount + 1;
         photoCountTextView.setText("已拍摄: " + photoCount + " 张"); // 更新文本提示

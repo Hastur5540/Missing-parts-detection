@@ -24,18 +24,18 @@
         <ImageView
             android:id="@+id/deviceImageView_IN"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
+            android:layout_height="270dp"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:scaleType="centerCrop" />
 
         <ImageView
             android:id="@+id/deviceImageView_OUT"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
+            android:layout_height="270dp"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:scaleType="centerCrop" />
 
         <!-- 填充剩余空间的 View -->
         <View
