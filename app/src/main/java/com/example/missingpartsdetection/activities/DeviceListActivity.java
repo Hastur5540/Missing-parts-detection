@@ -35,6 +35,8 @@ public class DeviceListActivity extends AppCompatActivity {
     private EditText searchInput;
     private DatabaseHelper databaseHelper;
     private ListView deviceListView;
+    private Button currentVisibleDeleteButton = null;
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -87,28 +89,61 @@ public class DeviceListActivity extends AppCompatActivity {
         });
         // 处理长按事件
         deviceListView.setOnItemLongClickListener((parent, view, position, id) -> {
-            // 获取列表项中的删除按钮
-            Button deleteButton = view.findViewById(R.id.deleteButton_1);
+            // 隐藏之前显示的删除按钮
+            if (currentVisibleDeleteButton != null) {
+                currentVisibleDeleteButton.setVisibility(View.INVISIBLE);
+            }
 
-            // 显示删除按钮
-            deleteButton.setVisibility(View.VISIBLE);
+            // 获取当前列表项的删除按钮
+            currentVisibleDeleteButton = view.findViewById(R.id.deleteButton_1);
+            currentVisibleDeleteButton.setVisibility(View.VISIBLE);
 
-            // 设置删除按钮点击监听
-            deleteButton.setOnClickListener(v -> {
-                deleteDevice(position);
-                deleteButton.setVisibility(View.INVISIBLE);
-            });
-
-            // 处理点击列表其他区域隐藏按钮
-            view.setOnTouchListener((v, event) -> {
+            // 设置全局触摸监听
+            View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+            rootView.setOnTouchListener((v, event) -> {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    if (event.getX() < deleteButton.getLeft() || event.getX() > deleteButton.getRight()) {
-                        deleteButton.setVisibility(View.INVISIBLE);
+                    // 转换按钮位置到屏幕坐标
+                    int[] location = new int[2];
+                    currentVisibleDeleteButton.getLocationOnScreen(location);
+
+                    // 判断点击位置是否在按钮范围内
+                    float x = event.getRawX();
+                    float y = event.getRawY();
+                    boolean isInside = x >= location[0] &&
+                            x <= (location[0] + currentVisibleDeleteButton.getWidth()) &&
+                            y >= location[1] &&
+                            y <= (location[1] + currentVisibleDeleteButton.getHeight());
+
+                    if (!isInside) {
+                        currentVisibleDeleteButton.setVisibility(View.INVISIBLE);
+                        currentVisibleDeleteButton = null;
+                        rootView.setOnTouchListener(null); // 移除全局监听
                     }
                 }
                 return false;
             });
+
+            // 删除按钮点击监听
+            currentVisibleDeleteButton.setOnClickListener(v -> {
+                deleteDevice(position);
+                currentVisibleDeleteButton.setVisibility(View.INVISIBLE);
+                currentVisibleDeleteButton = null;
+                rootView.setOnTouchListener(null); // 移除全局监听
+            });
+
             return true;
+        });
+
+// 修改列表项点击监听（添加隐藏按钮逻辑）
+        deviceListView.setOnItemClickListener((parent, view, position, id) -> {
+            if (currentVisibleDeleteButton != null) {
+                currentVisibleDeleteButton.setVisibility(View.INVISIBLE);
+                currentVisibleDeleteButton = null;
+                getWindow().getDecorView().findViewById(android.R.id.content)
+                        .setOnTouchListener(null);
+            }
+            Device selectedDevice = deviceList.get(position);
+            startComparisonActivity(selectedDevice);
         });
 
         // 搜索框文本变化监听
